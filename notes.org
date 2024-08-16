@@ -1,0 +1,29 @@
+#+title: Notes
+
+* TODOs
+- [ ] include mytype in precommit hook
+- [ ] consider torch vs JAX vs cupy
+
+| Package | Upsides | Downsides | Other considerations |
+|---------+---------+-----------+----------------------|
+| Jax     |         |           |                      |
+|---------+---------+-----------+----------------------|
+| Torch   |         |           |                      |
+|---------+---------+-----------+----------------------|
+| Cupy    |         |           |                      |
+|---------+---------+-----------+----------------------|
+
+* Rules
+- Functions
+  - Use typing and mypy
+  - Use docstring in RST format
+  - PEP 8
+    - better explicit than implicit
+  - Pytest
+    - Write tests to testing folder
+
+- Github
+  - Pull requests
+    1. Create fork
+    2. Clone fork
+    3. Make edits in branch
