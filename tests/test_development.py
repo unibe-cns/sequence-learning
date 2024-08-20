@@ -4,9 +4,7 @@ import unittest
 
 import numpy as np
 
-from seqlearn.main import (
-    SomaticWeights,  # Replace 'your_module' with the actual module name
-)
+from seqlearn.main import SomaticWeights
 
 
 class TestSomaticWeights(unittest.TestCase):
@@ -30,8 +28,10 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p0"],
             self.config["weight_params"]["latent_neurons"],
             self.config["weight_params"]["output_neurons"],
+            self.config["weight_params"]["output_neurons"]
+            + self.config["weight_params"]["latent_neurons"],
         )
-        self.assertEqual(weight_matrix.shape, (100, 100))
+        self.assertEqual(weight_matrix.shape, (110, 110))
 
     def test_weight_matrix_binary(self):
         weight_matrix, _, _ = self.somatic_weights.create_weight_matrix(
@@ -40,6 +40,8 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p0"],
             self.config["weight_params"]["latent_neurons"],
             self.config["weight_params"]["output_neurons"],
+            self.config["weight_params"]["output_neurons"]
+            + self.config["weight_params"]["latent_neurons"],
         )
         self.assertTrue(np.all((weight_matrix == 0) | (weight_matrix == 1)))
 
@@ -50,8 +52,10 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p0"],
             self.config["weight_params"]["latent_neurons"],
             self.config["weight_params"]["output_neurons"],
+            self.config["weight_params"]["output_neurons"]
+            + self.config["weight_params"]["latent_neurons"],
         )
-        self.assertEqual(num_in.shape, (100,))
+        self.assertEqual(num_in.shape, (110,))
 
     def test_num_out_shape(self):
         _, _, num_out = self.somatic_weights.create_weight_matrix(
@@ -60,8 +64,10 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p0"],
             self.config["weight_params"]["latent_neurons"],
             self.config["weight_params"]["output_neurons"],
+            self.config["weight_params"]["output_neurons"]
+            + self.config["weight_params"]["latent_neurons"],
         )
-        self.assertEqual(num_out.shape, (100,))
+        self.assertEqual(num_out.shape, (110,))
 
     def test_input_neurons_connections(self):
         _, num_in, _ = self.somatic_weights.create_weight_matrix(
@@ -70,6 +76,8 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p0"],
             self.config["weight_params"]["latent_neurons"],
             self.config["weight_params"]["output_neurons"],
+            self.config["weight_params"]["output_neurons"]
+            + self.config["weight_params"]["latent_neurons"],
         )
         self.assertTrue(np.all(num_in[:10] == 1))
 
@@ -80,10 +88,12 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p0"],
             self.config["weight_params"]["latent_neurons"],
             self.config["weight_params"]["output_neurons"],
+            self.config["weight_params"]["output_neurons"]
+            + self.config["weight_params"]["latent_neurons"],
         )
         total_connections = np.sum(weight_matrix)
         output_connections = self.config["weight_params"]["output_neurons"]
-        self.assertEqual(total_connections + output_connections, np.sum(num_in))
+        self.assertEqual(total_connections, np.sum(num_in) - output_connections)
         self.assertEqual(total_connections, np.sum(num_out))
 
     def test_no_self_connections(self):
@@ -93,6 +103,8 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p0"],
             self.config["weight_params"]["latent_neurons"],
             self.config["weight_params"]["output_neurons"],
+            self.config["weight_params"]["output_neurons"]
+            + self.config["weight_params"]["latent_neurons"],
         )
         self.assertTrue(np.all(np.diag(weight_matrix) == 0))
 

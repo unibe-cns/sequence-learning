@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Main script for creating weight matrix."""
 
+# TODO add Dendritic weights
 # TODO add delays to Dentritic weights class
 # TODO add delays to Somatic weights class
 # TODO add network class
@@ -29,11 +30,12 @@ class Weights:
     """
 
     def __init__(self, config):
-        self.n_latent = config["weight_params"]["latent_neurons"]
-        self.n_output = config["weight_params"]["output_neurons"]
-        self.weights = np.zeros((self.n_latent, self.n_latent))
-        self.num_in = np.zeros(self.n_latent)
-        self.num_out = np.zeros(self.n_latent)
+        self.num_latent = config["weight_params"]["latent_neurons"]
+        self.num_output = config["weight_params"]["output_neurons"]
+        self.num_total = self.num_latent + self.num_output
+        self.weights = None
+        self.num_in = None
+        self.num_out = None
 
     @abstractmethod
     def create_weight_matrix(self):
@@ -68,8 +70,8 @@ class DendriticWeights(Weights):
             self.W_out_lat,
             self.W_lat_out,
             self.W_lat_lat,
-            self.n_latent,
-            self.n_output,
+            self.num_latent,
+            self.num_output,
         )
 
     def create_weight_matrix(self):
@@ -100,111 +102,75 @@ class SomaticWeights(Weights):
         self.p0 = config["weight_params"]["p0"]
         self.p_first = 1 - self.p0
         self.weights, self.num_in, self.num_out = self.create_weight_matrix(
-            self.p, self.q, self.p0, self.n_latent, self.n_output
+            self.p, self.q, self.p0, self.num_latent, self.num_output, self.num_total
         )
 
     def create_weight_matrix(
-        self, p: float, q: float, p0: float, n: int, n_inputs: int
+        self,
+        p: float,
+        q: float,
+        p0: float,
+        num_latent: int,
+        num_output: int,
+        num_total: int,
     ) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
-        """Create the weight matrix."""
-        """
-        Create a weight matrix for a neural network with probabilistic connections.
-
-        This function generates a weight matrix for a neural network where connections
-        are formed based on probabilistic rules. It also tracks the number of incoming
-        and outgoing connections for each neuron.
-
-        Parameters
-        ----------
-        p : float
-            Probability factor for outgoing connections.
-        q : float
-            Probability factor for incoming connections.
-        p0 : float
-            Initial probability for forming the first outgoing connection.
-        n : int
-            Total number of neurons in the network.
-        n_inputs : int
-            Number of input neurons.
-
-        Returns
-        -------
-        Tuple[npt.NDArray, npt.NDArray, npt.NDArray]
-            A tuple containing:
-            - weight_matrix : npt.NDArray
-                An n x n binary matrix representing the connections between neurons.
-            - num_in : npt.NDArray
-                An array of length n representing the number of incoming connections
-        for each neuron.
-            - num_out : npt.NDArray
-                An array of length n representing the number of outgoing connections
-        for each neuron.
-
-        Notes
-        -----
-        The connection formation process is as follows:
-        1. Start with input neurons as potential connection sources.
-        2. For each source neuron, attempt to form connections based on probabilities.
-        3. If a connection is formed, select a target neuron and test for acceptance.
-        4. Update the weight matrix and connection counts accordingly.
-        5. Continue until all possible connections have been attempted.
-
-        The probability of forming an outgoing connection decreases with each successful
-        connection, while the probability of accepting an incoming connection decreases
-        with the number of existing incoming connections.
-        """
-        neurons_out = np.arange(self.n_latent)
-        neurons_in = np.arange(self.n_output, self.n_latent)
-        weight_matrix = np.zeros((self.n_latent, self.n_latent))
+        neurons_outgoing = np.arange(self.num_total)
+        neurons_incoming = np.arange(self.num_output, self.num_total)
+        weight_matrix = np.zeros((self.num_total, self.num_total))
 
         # Incoming connections
-        num_in = np.zeros(self.n_latent)
-        num_in[: self.n_output] = 1
+        num_in = np.zeros(self.num_total)
+        num_in[: self.num_output] = 1
 
         # Outgoing connections
-        num_out = np.zeros(self.n_latent)
+        num_out = np.zeros(self.num_total)
 
         # Neurons that can make a connection
-        neurons_unspent = np.arange(n)
-        neurons_looking = neurons_out[num_in > 0]
+        neurons_unspent = np.arange(num_total)
+        neurons_looking = neurons_outgoing[num_in > 0]
         while len(neurons_looking) > 0:
-            for neuron_pre in neurons_looking:
-                while np.isin(neuron_pre, neurons_looking):
+            for idx_pre in neurons_looking:
+                while np.isin(idx_pre, neurons_looking):
                     # Probability for forming connection
-                    nr_out = num_out[neuron_pre]
-                    if nr_out == 0:
+                    if num_out[idx_pre] == 0:
                         prob_out = 1 - p0
                     else:
-                        prob_out = np.power(self.p, nr_out)
+                        prob_out = np.power(self.p, num_out[idx_pre])
 
                     # Test for formation
                     formation = np.random.binomial(1, prob_out)
                     if not formation:
-                        # Remove from list of neurons unspent
-                        neurons_unspent = neurons_unspent[neurons_unspent != neuron_pre]
-                        neurons_looking = np.delete(neurons_looking, 0)
+                        # Remove neuron pre from list of unspent neurons
+                        neurons_unspent = neurons_unspent[neurons_unspent != idx_pre]
+                        neurons_looking = np.delete(
+                            neurons_looking, 0
+                        )  # TODO Test doing it like unspent
                     else:
                         # Possible post partners exluding self connection
-                        possible_post = neurons_in[neurons_in != neuron_pre]
+                        possible_post = neurons_incoming[neurons_incoming != idx_pre]
                         formed = 0
                         while not formed:
-                            neuron_post = np.random.choice(possible_post)
-                            prob_in = np.power(self.q, num_in[neuron_post])
+                            post_idx = np.random.choice(possible_post)
+                            prob_in = np.power(self.q, num_in[post_idx])
                             accept = np.random.binomial(1, prob_in)
 
                             if accept:
                                 # Add connection to matrix
-                                weight_matrix[neuron_post, neuron_pre] = 1
-                                num_out[neuron_pre] += 1
-                                num_in[neuron_post] += 1
-                                if np.isin(neuron_post, neurons_unspent):
+                                weight_matrix[post_idx, idx_pre] = 1
+                                num_out[idx_pre] += 1
+                                num_in[post_idx] += 1  # TODO PROBLEM with indexing??
+                                if np.isin(post_idx, neurons_unspent):
                                     neurons_unspent = neurons_unspent[
-                                        neurons_unspent != neuron_post
+                                        neurons_unspent != post_idx
                                     ]
                                     neurons_looking = np.append(
-                                        neurons_looking, neuron_post
+                                        neurons_looking, post_idx
                                     )
                                 formed = 1
+
+                                if np.sum(weight_matrix) != np.sum(num_in) - num_output:
+                                    print("Problem with total connections")
+                                    breakpoint()
 
                             else:
                                 continue
