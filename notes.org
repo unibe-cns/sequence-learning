@@ -1,0 +1,148 @@
+#+title: Notes
+
+* TODOs
+- [ ] consider torch vs JAX vs cupy
+- [ ] Logging
+- [ ]
+
+| Package | Upsides | Downsides | Other considerations |
+|---------+---------+-----------+----------------------|
+| Jax     |         |           |                      |
+|---------+---------+-----------+----------------------|
+| Torch   |         |           |                      |
+|---------+---------+-----------+----------------------|
+| Cupy    |         |           |                      |
+|---------+---------+-----------+----------------------|
+
+* Rules
+- Functions
+  - Use typing and mypy
+  - Use docstring in RST format
+  - PEP 8
+    - better explicit than implicit
+  - Pytest
+    - Write tests to testing folder
+
+- Github
+  - Pull requests
+    1. Create fork
+    2. Clone fork
+    3. Make edits in branch
+
+
+#+BEGIN_SRC python :eval no
+# Python-like pseudocode
+
+# Activation function
+def phi(voltage, a, b):
+
+    return 1 / 1 + exp(a (b - voltage))
+
+# Initialization
+w_den, w_som = initialize_weights()
+
+for i in range(0 , N):
+    v[i] = E_l
+    u[i] = E_l
+    r_bar[i] = phi(E_l)
+    d_den[i], d_som[i] = initialize_delays()
+
+    for t in range (0, d_max):
+        r[i,t] = phi(E_l)
+
+# Simulation
+for t in range(0, T_max, dt):
+
+    # Dendritic Input
+    # Postsynaptic Loop
+    for j in range(0, N):
+        I_den[j] = 0
+
+        # Presynaptic Loop
+        for i in range(0, N):
+            I_den[j] += w_den[j,i] * r[i, d_den[i]]
+
+    # Somatic Input
+    # Postsynaptic Loop
+    for j in range(num_vis, N):
+        I_som[j] = 0
+
+        # Presynaptic Loop
+        for i in range(N):
+            if w_som[j, i]:
+                # Excitatory conductance
+                if r[i, d_den[i]] > phi(E_l):
+                        g_exc = g_exc0 * r[i, d_den[i]]
+                else:
+                        g_exc = g_exc0 * phi(E_l)
+
+                # Inhibitory conductance
+                if r[i, d_den[i]] < phi(E_l):
+                        g_inh = g_inh0 * r[i, d_den[i]]
+                else:
+                        g_inh= g_inh0 * phi(E_l)
+
+                I_som[j] += g_exc * (E_exc - u[j]) + g_inh * (E_inh - u[j])
+            else:
+                continue
+
+     # Teaching Input
+     # Postsynaptic Loop
+     for j in range(num_vis):
+
+         # Excitatory teaching conductance
+         g_exc = lam /(1-lam) * (g_l + g_den) * (E_inh - u_tgt[j, t]) / (E_inh - E_exc)
+
+         # Inhibitory teaching conductance
+         g_inh = lam /(1-lam) * (g_l + g_den) * (u_tgt[j, t] - E_exc) / (E_inh - E_exc)
+
+         # Teaching Input
+         I_som[j] += g_exc * (E_exc - u[j]) + g_inh * (E_inh - u[j])
+
+     # Update Membranes
+     for j in range(N):
+
+         # Dendritic membrane
+         v[j] += (-g_l * (v[j] - E_l) + I_den[j])/C_v * dt
+
+         # Somatic membrane
+         u[j] += (-g_l * (u[j] - E_l) + g_den(v[j] - u[j]) + I_som[j])/C_u * dt
+
+         # Firing rates
+         r[j, 1:] = r[:-1]
+         r[j, 0] = phi(u[j])
+
+     # Weight updates
+     for i in range(N):
+         r_bar[i] += (-g_l * r_bar[i] + (g_l * g_den) / (g_l + g_den) * r[i, d_den[i])) * dt
+
+     for j in range(N):
+         v_star[j] = (g_l * E_l + g_den * v[j]) / (g_l + g_den)
+
+     for i in range(N):
+         for j in range(N):
+             w_delta[j, i] = phi(u[j]) - phi(v_star[j]) * r_bar[i]
+             w_den[j, i] += eta * w_delta[j, i]
+
+
+# Constants
+num_lat = 50
+num_vis = 13
+N = num_lat + num_vis
+C_v = 1.0
+C_u = 1.0
+E_l = -70.0
+E_exc = 0.0
+E_inh = -75.0
+g_l = 0.1
+g_den = 2.0
+g_exc0 = 0.3
+g_inh0 = 6.0
+a   = 0.3
+b   = -58.0
+d_den = [5, 15]
+d_som = [5, 15]
+d_t = 25
+lam = 0.2
+eta = 10e-4
+#+END_SRC
