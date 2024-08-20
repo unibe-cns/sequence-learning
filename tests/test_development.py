@@ -12,9 +12,9 @@ class TestSomaticWeights(unittest.TestCase):
         # Create a mock config for testing
         self.config = {
             "weight_params": {
-                "latent_neurons": 100,
-                "output_neurons": 10,
-                "p": 0.5,
+                "num_lat": 100,
+                "num_vis": 10,
+                "p": 0.6,
                 "q": 0.3,
                 "p0": 0.1,
             }
@@ -26,10 +26,10 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p"],
             self.config["weight_params"]["q"],
             self.config["weight_params"]["p0"],
-            self.config["weight_params"]["latent_neurons"],
-            self.config["weight_params"]["output_neurons"],
-            self.config["weight_params"]["output_neurons"]
-            + self.config["weight_params"]["latent_neurons"],
+            self.config["weight_params"]["num_lat"],
+            self.config["weight_params"]["num_vis"],
+            self.config["weight_params"]["num_vis"]
+            + self.config["weight_params"]["num_lat"],
         )
         self.assertEqual(weight_matrix.shape, (110, 110))
 
@@ -38,10 +38,10 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p"],
             self.config["weight_params"]["q"],
             self.config["weight_params"]["p0"],
-            self.config["weight_params"]["latent_neurons"],
-            self.config["weight_params"]["output_neurons"],
-            self.config["weight_params"]["output_neurons"]
-            + self.config["weight_params"]["latent_neurons"],
+            self.config["weight_params"]["num_lat"],
+            self.config["weight_params"]["num_vis"],
+            self.config["weight_params"]["num_vis"]
+            + self.config["weight_params"]["num_lat"],
         )
         self.assertTrue(np.all((weight_matrix == 0) | (weight_matrix == 1)))
 
@@ -50,10 +50,10 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p"],
             self.config["weight_params"]["q"],
             self.config["weight_params"]["p0"],
-            self.config["weight_params"]["latent_neurons"],
-            self.config["weight_params"]["output_neurons"],
-            self.config["weight_params"]["output_neurons"]
-            + self.config["weight_params"]["latent_neurons"],
+            self.config["weight_params"]["num_lat"],
+            self.config["weight_params"]["num_vis"],
+            self.config["weight_params"]["num_vis"]
+            + self.config["weight_params"]["num_lat"],
         )
         self.assertEqual(num_in.shape, (110,))
 
@@ -62,10 +62,10 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p"],
             self.config["weight_params"]["q"],
             self.config["weight_params"]["p0"],
-            self.config["weight_params"]["latent_neurons"],
-            self.config["weight_params"]["output_neurons"],
-            self.config["weight_params"]["output_neurons"]
-            + self.config["weight_params"]["latent_neurons"],
+            self.config["weight_params"]["num_lat"],
+            self.config["weight_params"]["num_vis"],
+            self.config["weight_params"]["num_vis"]
+            + self.config["weight_params"]["num_lat"],
         )
         self.assertEqual(num_out.shape, (110,))
 
@@ -74,10 +74,10 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p"],
             self.config["weight_params"]["q"],
             self.config["weight_params"]["p0"],
-            self.config["weight_params"]["latent_neurons"],
-            self.config["weight_params"]["output_neurons"],
-            self.config["weight_params"]["output_neurons"]
-            + self.config["weight_params"]["latent_neurons"],
+            self.config["weight_params"]["num_lat"],
+            self.config["weight_params"]["num_vis"],
+            self.config["weight_params"]["num_vis"]
+            + self.config["weight_params"]["num_lat"],
         )
         self.assertTrue(np.all(num_in[:10] == 1))
 
@@ -86,13 +86,13 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p"],
             self.config["weight_params"]["q"],
             self.config["weight_params"]["p0"],
-            self.config["weight_params"]["latent_neurons"],
-            self.config["weight_params"]["output_neurons"],
-            self.config["weight_params"]["output_neurons"]
-            + self.config["weight_params"]["latent_neurons"],
+            self.config["weight_params"]["num_lat"],
+            self.config["weight_params"]["num_vis"],
+            self.config["weight_params"]["num_vis"]
+            + self.config["weight_params"]["num_lat"],
         )
         total_connections = np.sum(weight_matrix)
-        output_connections = self.config["weight_params"]["output_neurons"]
+        output_connections = self.config["weight_params"]["num_vis"]
         self.assertEqual(total_connections, np.sum(num_in) - output_connections)
         self.assertEqual(total_connections, np.sum(num_out))
 
@@ -101,10 +101,10 @@ class TestSomaticWeights(unittest.TestCase):
             self.config["weight_params"]["p"],
             self.config["weight_params"]["q"],
             self.config["weight_params"]["p0"],
-            self.config["weight_params"]["latent_neurons"],
-            self.config["weight_params"]["output_neurons"],
-            self.config["weight_params"]["output_neurons"]
-            + self.config["weight_params"]["latent_neurons"],
+            self.config["weight_params"]["num_lat"],
+            self.config["weight_params"]["num_vis"],
+            self.config["weight_params"]["num_vis"]
+            + self.config["weight_params"]["num_lat"],
         )
         self.assertTrue(np.all(np.diag(weight_matrix) == 0))
 

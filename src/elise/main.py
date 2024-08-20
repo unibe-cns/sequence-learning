@@ -30,8 +30,8 @@ class Weights:
     """
 
     def __init__(self, config):
-        self.num_latent = config["weight_params"]["latent_neurons"]
-        self.num_output = config["weight_params"]["output_neurons"]
+        self.num_latent = config["weight_params"]["num_lat"]
+        self.num_output = config["weight_params"]["num_vis"]
         self.num_total = self.num_latent + self.num_output
         self.weights = None
         self.num_in = None
@@ -142,12 +142,13 @@ class SomaticWeights(Weights):
                     if not formation:
                         # Remove neuron pre from list of unspent neurons
                         neurons_unspent = neurons_unspent[neurons_unspent != idx_pre]
-                        neurons_looking = np.delete(
-                            neurons_looking, 0
-                        )  # TODO Test doing it like unspent
+                        neurons_looking = np.delete(neurons_looking, 0)
                     else:
-                        # Possible post partners exluding self connection
+                        # Exclude connections to self and to neurons already connected
                         possible_post = neurons_incoming[neurons_incoming != idx_pre]
+                        neurons_connected = np.where(weight_matrix[:, idx_pre] == 1)[0]
+                        possible_post = np.setdiff1d(possible_post, neurons_connected)
+
                         formed = 0
                         while not formed:
                             post_idx = np.random.choice(possible_post)
