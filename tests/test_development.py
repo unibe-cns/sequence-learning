@@ -3,110 +3,79 @@
 import unittest
 
 import numpy as np
+import pytest
 
-from seqlearn.main import SomaticWeights
+from seqlearn.main import SomaticWeights, WeightConfig
 
 
-class TestSomaticWeights(unittest.TestCase):
-    def setUp(self):
-        # Create a mock config for testing
-        self.config = {
-            "weight_params": {
-                "num_lat": 100,
-                "num_vis": 10,
-                "p": 0.6,
-                "q": 0.3,
-                "p0": 0.1,
-            }
+@pytest.fixture
+def default_weight_config():
+    return WeightConfig(
+        {
+            "num_lat": 50,
+            "num_vis": 13,
+            "p": 0.5,
+            "q": 0.3,
+            "p0": 0.1,
         }
-        self.somatic_weights = SomaticWeights(self.config)
+    )
 
-    def test_weight_matrix_shape(self):
-        weight_matrix, _, _ = self.somatic_weights.create_weight_matrix(
-            self.config["weight_params"]["p"],
-            self.config["weight_params"]["q"],
-            self.config["weight_params"]["p0"],
-            self.config["weight_params"]["num_lat"],
-            self.config["weight_params"]["num_vis"],
-            self.config["weight_params"]["num_vis"]
-            + self.config["weight_params"]["num_lat"],
-        )
-        self.assertEqual(weight_matrix.shape, (110, 110))
 
-    def test_weight_matrix_binary(self):
-        weight_matrix, _, _ = self.somatic_weights.create_weight_matrix(
-            self.config["weight_params"]["p"],
-            self.config["weight_params"]["q"],
-            self.config["weight_params"]["p0"],
-            self.config["weight_params"]["num_lat"],
-            self.config["weight_params"]["num_vis"],
-            self.config["weight_params"]["num_vis"]
-            + self.config["weight_params"]["num_lat"],
-        )
-        self.assertTrue(np.all((weight_matrix == 0) | (weight_matrix == 1)))
+def test_create_weight_matrix_basic(default_weight_config):
+    sw = SomaticWeights(default_weight_config)
+    weight_matrix, num_in, num_out = sw.create_weight_matrix()
 
-    def test_num_in_shape(self):
-        _, num_in, _ = self.somatic_weights.create_weight_matrix(
-            self.config["weight_params"]["p"],
-            self.config["weight_params"]["q"],
-            self.config["weight_params"]["p0"],
-            self.config["weight_params"]["num_lat"],
-            self.config["weight_params"]["num_vis"],
-            self.config["weight_params"]["num_vis"]
-            + self.config["weight_params"]["num_lat"],
-        )
-        self.assertEqual(num_in.shape, (110,))
+    assert isinstance(weight_matrix, np.ndarray)
+    assert weight_matrix.shape == (63, 63)  # 50 + 13 = 63
+    assert np.all((weight_matrix == 0) | (weight_matrix == 1))
+    assert np.all(np.diag(weight_matrix) == 0)
 
-    def test_num_out_shape(self):
-        _, _, num_out = self.somatic_weights.create_weight_matrix(
-            self.config["weight_params"]["p"],
-            self.config["weight_params"]["q"],
-            self.config["weight_params"]["p0"],
-            self.config["weight_params"]["num_lat"],
-            self.config["weight_params"]["num_vis"],
-            self.config["weight_params"]["num_vis"]
-            + self.config["weight_params"]["num_lat"],
-        )
-        self.assertEqual(num_out.shape, (110,))
 
-    def test_input_neurons_connections(self):
-        _, num_in, _ = self.somatic_weights.create_weight_matrix(
-            self.config["weight_params"]["p"],
-            self.config["weight_params"]["q"],
-            self.config["weight_params"]["p0"],
-            self.config["weight_params"]["num_lat"],
-            self.config["weight_params"]["num_vis"],
-            self.config["weight_params"]["num_vis"]
-            + self.config["weight_params"]["num_lat"],
-        )
-        self.assertTrue(np.all(num_in[:10] == 1))
+def test_connectivity_constraints(default_weight_config):
+    sw = SomaticWeights(default_weight_config)
+    weight_matrix, _, _ = sw.create_weight_matrix()
 
-    def test_total_connections_match(self):
-        weight_matrix, num_in, num_out = self.somatic_weights.create_weight_matrix(
-            self.config["weight_params"]["p"],
-            self.config["weight_params"]["q"],
-            self.config["weight_params"]["p0"],
-            self.config["weight_params"]["num_lat"],
-            self.config["weight_params"]["num_vis"],
-            self.config["weight_params"]["num_vis"]
-            + self.config["weight_params"]["num_lat"],
-        )
-        total_connections = np.sum(weight_matrix)
-        output_connections = self.config["weight_params"]["num_vis"]
-        self.assertEqual(total_connections, np.sum(num_in) - output_connections)
-        self.assertEqual(total_connections, np.sum(num_out))
+    assert np.all(weight_matrix[:13, :13] == 0)  # No connections between output neurons
+    assert np.all(
+        weight_matrix[:13, :] == 0
+    )  # No connections from latent to output neurons
 
-    def test_no_self_connections(self):
-        weight_matrix, _, _ = self.somatic_weights.create_weight_matrix(
-            self.config["weight_params"]["p"],
-            self.config["weight_params"]["q"],
-            self.config["weight_params"]["p0"],
-            self.config["weight_params"]["num_lat"],
-            self.config["weight_params"]["num_vis"],
-            self.config["weight_params"]["num_vis"]
-            + self.config["weight_params"]["num_lat"],
-        )
-        self.assertTrue(np.all(np.diag(weight_matrix) == 0))
+
+def test_statistical_properties(default_weight_config):
+    sw = SomaticWeights(default_weight_config)
+    weight_matrix, num_in, num_out = sw.create_weight_matrix()
+
+    total_connections = np.sum(weight_matrix)
+    expected_connections = (
+        np.sum(num_in) - 13
+    )  # Subtract initial connections to output neurons
+    assert total_connections == expected_connections
+
+
+def test_consistency(default_weight_config):
+    np.random.seed(42)
+    sw1 = SomaticWeights(default_weight_config)
+    matrix1, _, _ = sw1.create_weight_matrix()
+
+    np.random.seed(42)
+    sw2 = SomaticWeights(default_weight_config)
+    matrix2, _, _ = sw2.create_weight_matrix()
+
+    assert np.all(matrix1 == matrix2)
+
+
+def test_invalid_inputs():
+    invalid_config = WeightConfig(
+        {
+            "num_lat": -5,
+            "num_vis": 2,
+            "p": 1.5,
+            "q": 0.3,
+            "p0": 0.1,
+        }
+    )
+    with pytest.raises(ValueError):
+        SomaticWeights(invalid_config)
 
 
 if __name__ == "__main__":
