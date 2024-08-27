@@ -71,6 +71,8 @@ def jax_gpu_init(n):
 
 
 def jax_gpu_compute(a, M, b):
+    # warm-up
+    _ = jnp.dot(a, M) + b
     start_time = time.time()
     result = jnp.dot(a, M) + b
     end_time = time.time()
@@ -102,6 +104,8 @@ def pytorch_cpu_init(n):
 
 
 def pytorch_cpu_compute(a, M, b):
+    # warm-up
+    _ = torch.matmul(a, M) + b
     start_time = time.time()
     result = torch.matmul(a, M) + b
     end_time = time.time()
@@ -118,6 +122,8 @@ def pytorch_gpu_init(n):
 
 
 def pytorch_gpu_compute(a, M, b):
+    # warm_up
+    _ = torch.matmul(a, M) + b
     start_time = time.time()
     result = torch.matmul(a, M) + b
     end_time = time.time()
@@ -134,6 +140,8 @@ def cupy_init(n):
 
 
 def cupy_compute(a, M, b):
+    # warm_up
+    _ = cp.dot(a, M) + b
     start_time = time.time()
     result = cp.dot(a, M) + b
     end_time = time.time()
