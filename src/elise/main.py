@@ -11,7 +11,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 import toml
@@ -26,10 +25,14 @@ class Config:
         return self._config.get(section, {})
 
 
-class WeightConfig:
+class NetworkConfig:
     def __init__(self, config: Dict[str, Any]):
         self.num_lat: int = config.get("num_lat", 50)
         self.num_vis: int = config.get("num_vis", 13)
+
+
+class WeightConfig:
+    def __init__(self, config: Dict[str, Any]):
         self.p: float = config.get("p", 0.5)
         self.q: float = config.get("q", 0.3)
         self.p0: float = config.get("p0", 0.1)
@@ -75,12 +78,6 @@ class NeuronConfig:
 
 class FullConfig:
     _instance = None
-
-    def __new__(cls, config_file: str = "config.toml"):
-        if cls._instance is None:
-            cls._instance = super(FullConfig, cls).__new__(cls)
-            cls._instance._initialize(config_file)
-        return cls._instance
 
     def _initialize(self, config_file: str):
         config = Config(config_file)
@@ -238,7 +235,129 @@ class SomaticWeights(Weights):
         return weight_matrix, num_in, num_out
 
 
-# Main
+class ActivationFunction(ABC):
+    @abstractmethod
+    def phi(self, voltage: float) -> float:
+        pass
+
+
+class sigmoidActivation(ActivationFunction):
+    def phi(self, voltage: float) -> float:
+        return 1 / (1 + np.exp(self.a * (self.b - voltage)))
+
+
+class ODE(ABC):
+    def __init__(self, neuron_config: NeuronConfig):
+        self.E_l = neuron_config.E_l
+        self.g_l = neuron_config.g_lat
+
+    @abstractmethod
+    def ode(self, t: float, *args) -> float:
+        pass
+
+
+class ODESomatic(ODE):
+    def __init__(self, neuron_config: NeuronConfig):
+        super().__init__(neuron_config)
+        self.C_u = neuron_config.C_u
+        self.g_den = neuron_config.g_den
+
+    def ode(self, t: float, u: float, v: float, I_den: float, I_som: float) -> float:
+        return (-self.g_l * (u - self.E_l) + self.g_den * (v - u) + I_som) / self.C_u
+
+
+class ODEDendritic(ODE):
+    def __init__(self, neuron_config: NeuronConfig):
+        super().__init__(neuron_config)
+        self.C_v = neuron_config.C_v
+
+    def ode(self, t: float, v: float, u: float, I_den: float) -> float:
+        return (-self.g_l * (v - self.E_l) + I_den) / self.C_v
+
+
+class NeuronPop(ABC):
+    def __init__(self, neuron_params):
+        self.E_l = neuron_params.E_l
+        self.g_l = neuron_params.g_lat
+        self.C_v = neuron_params.C_v
+        self.C_u = neuron_params.C_u
+        self.E_l = neuron_params.E_l
+        self.E_exc = neuron_params.E_exc
+        self.E_inh = neuron_params.E_inh
+        self.g_l = neuron_params.g_l
+        self.g_den = neuron_params.g_den
+        self.g_exc0 = neuron_params.g_exc0
+        self.g_inh0 = neuron_params.g_inh0
+
+
+class TwoCompartNeuronPop(NeuronPop):
+    def __init__(self, dendriticODE, somaticODE, activationFunction):
+        # Dynamics
+        self.v_dot = dendriticODE
+        self.s_dot = somaticODE
+        self.phi = activationFunction
+
+        # Dynamical variables
+        self.v = np.ones(self.N) * self.E_l
+        self.u = np.ones(self.N) * self.E_l
+        self.r_bar = np.ones(self.N) * self.phi(self.E_l)
+        self.r = np.ones(self.N) * self.phi(self.E_l)
+        self.I_den = np.zeros(self.N)
+        self.I_som = np.zeros(self.N)
+
+
+class Network:
+    def __init__(self, network_config, dendritic_weights, somatic_weights, neurons):
+        self.dendritic_weights = dendritic_weights
+        self.somatic_weights = somatic_weights
+        self.neurons = neurons
+
+
+class Solver(ABC):
+    @abstractmethod
+    def solve(self):
+        pass
+
+
+class EulerSolver(Solver):
+    def __init__(self, dt: float):
+        self.dt = dt
+
+    def solve(self, ode: ODE, t: float, y: npt.NDArray) -> npt.NDArray:
+        return y + self.dt * ode(t, y)
+
+
+class RungeKuttaSolver(Solver):
+    def __init__(self, dt: float):
+        self.dt = dt
+
+    def solve(self, ode: ODE, t: float, y: npt.NDArray) -> npt.NDArray:
+        k1 = self.dt * ode(t, y)
+        k2 = self.dt * ode(t + self.dt / 2, y + k1 / 2)
+        k3 = self.dt * ode(t + self.dt / 2, y + k2 / 2)
+        k4 = self.dt * ode(t + self.dt, y + k3)
+        return y + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+
+
+class Logger:
+    def __init__(self, log_file: str):
+        self.log_file = log_file
+
+    def log(self, message: str):
+        with open(self.log_file, "a") as f:
+            f.write(message + "\n")
+
+
+# IMplement simulation class with dependency inversion principle
+class Simulation:
+    def __init__(self, network, solver, logger):
+        self.network = network
+        self.solver = solver
+        self.logger = logger
+
+        pass
+
+
 if __name__ == "__main__":
     # Load config file
     # Usage
@@ -249,26 +368,21 @@ if __name__ == "__main__":
     full_config = FullConfig(
         "config.toml"
     )  # This creates or gets the singleton instance
+
+    # Create weight matrices
     dendritic_weights = DendriticWeights(full_config.weight_params)
     somatic_weights = SomaticWeights(full_config.weight_params)
 
-    print(config1 is config2)  # This will print True
+    # Create Neurons
+    somatic_ode = ODESomatic(full_config.neuron_params)
+    dendritic_ode = ODEDendritic(full_config.neuron_params)
+    activation_function = sigmoidActivation()
+    neurons = TwoCompartNeuronPop(full_config.neuron_params)
 
-    print(config1.seed)
-    print(config1.weight_params.num_lat)
-    print(config1.simulation_params.dt)
-    print(config1.neuron_params.E_l)
+    # Create network
+    network = Network(NetworkConfig, dendritic_weights, somatic_weights, neurons)
 
-    # Out
-    weights = somatic_weights.weights
-    num_in = somatic_weights.num_in
-    num_out = somatic_weights.num_out
-
-    # Set seed
-    np.random.seed(full_config.seed)
-
-    breakpoint()
-    # Plot weight matrix
-    fig, ax = plt.subplots()
-    ax.imshow(weights)
-    plt.show()
+    # Create simulation
+    logger = Logger("log.txt")
+    solver = EulerSolver(full_config.simulation_params.dt)
+    simulation = Simulation(network, solver, logger)
