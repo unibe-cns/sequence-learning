@@ -29,7 +29,7 @@
     2. Clone fork
     3. Make edits in branch
 
-
+* Pseudocode
 #+BEGIN_SRC python :eval no
 # Python-like pseudocode
 
@@ -146,3 +146,22 @@ d_t = 25
 lam = 0.2
 eta = 10e-4
 #+END_SRC
+
+* Plan
+- Design implementation of Buffers
+- Decide of whether to separate input and latent population (indexing vs concatenating)
+- Decide on library (cupy, jax, pytorch)
+- Decide on Functional vs Object oriented approach
+- Design simulation procedure
+  - What parameters
+  - How to implement disturbances
+  - Multiple patterns - learning scheduler
+  - Input -> conductance mapping
+- Design data loader
+  - Sequence -> Input mapping
+- Decide on datasets (established sequences?)
+- Decide on which operations should be perfomed on GPU
+- Neptune AI integration
+- Optimizer (Adam etc)
+- ODE Solver (Euler, Runge)
+  - DDE
