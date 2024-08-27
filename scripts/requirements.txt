@@ -1,0 +1,6 @@
+numpy==1.21.6
+jax==0.3.25
+jaxlib==0.3.25
+torch==1.13.1
+cupy-cuda11x==11.0.0
+matplotlib==3.5.3
