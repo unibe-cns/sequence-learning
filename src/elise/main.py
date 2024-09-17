@@ -30,7 +30,6 @@ class NetworkConfig:
         self.num_lat: int = config.get("num_lat", 50)
         self.num_vis: int = config.get("num_vis", 13)
 
-
 class WeightConfig:
     def __init__(self, config: Dict[str, Any]):
         self.p: float = config.get("p", 0.5)
@@ -111,7 +110,6 @@ class DendriticWeights(Weights):
     """
     Class for creating dendritic weight matrices.
     """
-
     def __init__(self, weight_config: WeightConfig):
         super().__init__(weight_config)
         self.W_out_out = weight_config.W_out_out
@@ -230,7 +228,6 @@ class SomaticWeights(Weights):
 
         if np.sum(weight_matrix) != np.sum(num_in) - self.num_output:
             print("Problem with total connections")
-            breakpoint()
 
         return weight_matrix, num_in, num_out
 
@@ -275,26 +272,30 @@ class ODEDendritic(ODE):
         return (-self.g_l * (v - self.E_l) + I_den) / self.C_v
 
 
-class NeuronPop(ABC):
-    def __init__(self, neuron_params):
-        self.E_l = neuron_params.E_l
-        self.g_l = neuron_params.g_lat
-        self.C_v = neuron_params.C_v
-        self.C_u = neuron_params.C_u
-        self.E_l = neuron_params.E_l
-        self.E_exc = neuron_params.E_exc
-        self.E_inh = neuron_params.E_inh
-        self.g_l = neuron_params.g_l
-        self.g_den = neuron_params.g_den
-        self.g_exc0 = neuron_params.g_exc0
-        self.g_inh0 = neuron_params.g_inh0
+class Buffer:
+    def __init__(self, buffer_size: int):
+        pass
+
+class Dataloader:
+    def __init__(self ):
+        pass
 
 
-class TwoCompartNeuronPop(NeuronPop):
-    def __init__(self, dendriticODE, somaticODE, activationFunction):
-        # Dynamics
-        self.v_dot = dendriticODE
-        self.s_dot = somaticODE
+class Network:
+    def __init__(self,
+                 network_params: NetworkConfig,
+                 neuron_params: NeuronConfig,
+                 dendritic_weights: DendriticWeights,
+                 somatic_weights: SomaticWeights,
+                 rate_buffer: Buffer,):
+        self.num_lat = network_params.num_lat
+        self.num_vis = network_params.num_vis
+        self.num_all = self.num_lat + self.num_vis
+        self.dendritic_weights = dendritic_weights.create_weights(n)
+        self.somatic_weights = somatic_weights.create_weights(n)
+        self.rate_buffer = rate_buffer
+        self.neurons = neurons
+
         self.phi = activationFunction
 
         # Dynamical variables
@@ -304,39 +305,10 @@ class TwoCompartNeuronPop(NeuronPop):
         self.r = np.ones(self.N) * self.phi(self.E_l)
         self.I_den = np.zeros(self.N)
         self.I_som = np.zeros(self.N)
-
-
-class Network:
-    def __init__(self, network_config, dendritic_weights, somatic_weights, neurons):
-        self.dendritic_weights = dendritic_weights
-        self.somatic_weights = somatic_weights
-        self.neurons = neurons
-
-
-class Solver(ABC):
-    @abstractmethod
-    def solve(self):
-        pass
-
-
-class EulerSolver(Solver):
-    def __init__(self, dt: float):
-        self.dt = dt
-
-    def solve(self, ode: ODE, t: float, y: npt.NDArray) -> npt.NDArray:
-        return y + self.dt * ode(t, y)
-
-
-class RungeKuttaSolver(Solver):
-    def __init__(self, dt: float):
-        self.dt = dt
-
-    def solve(self, ode: ODE, t: float, y: npt.NDArray) -> npt.NDArray:
-        k1 = self.dt * ode(t, y)
-        k2 = self.dt * ode(t + self.dt / 2, y + k1 / 2)
-        k3 = self.dt * ode(t + self.dt / 2, y + k2 / 2)
-        k4 = self.dt * ode(t + self.dt, y + k3)
-        return y + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+        self.u_tgt = None # TODO Add
+        self.g_exc = None
+        y0 = (self.v, self.u, self.r_bar, self.w_den)
+        args = (self)
 
 
 class Logger:
@@ -347,15 +319,17 @@ class Logger:
         with open(self.log_file, "a") as f:
             f.write(message + "\n")
 
-
 # IMplement simulation class with dependency inversion principle
 class Simulation:
-    def __init__(self, network, solver, logger):
+    def __init__(self, network, solver, dataloader, logger):
         self.network = network
         self.solver = solver
         self.logger = logger
 
-        pass
+    def integrate_epoch(self, idk):
+
+        scipy.odeint(self.network.network_ode,
+                     self.network.y0)
 
 
 if __name__ == "__main__":
