@@ -4,6 +4,7 @@ from config import FullConfig
 from dataloader import Dataloader
 from logger import Logger
 from model import DendriticWeights, Network, Neurons, SomaticWeights
+from rate_buffer import Buffer
 
 
 # IMplement simulation class with dependency inversion principle
@@ -26,14 +27,23 @@ if __name__ == "__main__":
     )  # This creates or gets the singleton instance
 
     # Create weight matrices
-    dendritic_weights = DendriticWeights(full_config.weight_params)
-    somatic_weights = SomaticWeights(full_config.weight_params)
+    dendritic_weights = DendriticWeights
+    somatic_weights = SomaticWeights
 
-    # Create neurons
-    neurons = Neurons(full_config.neuron_params)
+    # Neurons
+    neurons = Neurons
+
+    # Buffer
+    rate_buffer = Buffer
 
     # Create network
-    network = Network(full_config.network_params, dendritic_weights, somatic_weights)
+    network = Network(
+        full_config.network_params,
+        dendritic_weights,
+        somatic_weights,
+        neurons,
+        rate_buffer,
+    )
 
     # Create dataloader
     dataloader = Dataloader(full_config.data_params)
