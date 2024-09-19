@@ -4,8 +4,8 @@ from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
-from buffer import Buffer
 from config import NetworkConfig, NeuronConfig, WeightConfig
+from rate_buffer import Buffer
 
 
 class Weights(ABC):
@@ -30,8 +30,8 @@ class DendriticWeights(Weights):
     Class for creating dendritic weight matrices.
     """
 
-    def __init__(self, weight_config: WeightConfig):
-        super().__init__(weight_config)
+    def __init__(self, weight_config: WeightConfig, num_vis, num_lat):
+        super().__init__(weight_config, num_vis, num_lat)
         self.W_out_out = weight_config.W_out_out
         self.W_out_lat = weight_config.W_out_lat
         self.W_lat_out = weight_config.W_lat_out
@@ -49,8 +49,8 @@ class SomaticWeights(Weights):
     Class for creating somatic weight matrices.
     """
 
-    def __init__(self, weight_config: WeightConfig):
-        super().__init__(weight_config)
+    def __init__(self, weight_config: WeightConfig, num_vis, num_lat):
+        super().__init__(weight_config, num_vis, num_lat)
         self.p = weight_config.p
         self.q = weight_config.q
         self.p0 = weight_config.p0
@@ -167,6 +167,8 @@ class Network:
     def __init__(
         self,
         network_params: NetworkConfig,
+        weight_params: WeightConfig,
+        neuron_params: NeuronConfig,
         dendritic_weights: DendriticWeights,
         somatic_weights: SomaticWeights,
         neurons: Neurons,
@@ -176,9 +178,13 @@ class Network:
         self.num_vis = network_params.num_vis
         self.num_all = self.num_lat + self.num_vis
 
-        self.dendritic_weights = dendritic_weights(self.num_lat, self.num_vis)
-        self.somatic_weights = somatic_weights(self.num_lat, self.num_vis)
-        self.neurons = neurons(self.num_all, rate_buffer)
+        self.dendritic_weights = dendritic_weights(
+            weight_params, self.num_lat, self.num_vis
+        )
+        self.somatic_weights = somatic_weights(
+            weight_params, self.num_lat, self.num_vis
+        )
+        self.neurons = neurons(neuron_params, self.num_all, rate_buffer)
 
     def simulation_step(self, dt):
         # Implement simulation step logic here

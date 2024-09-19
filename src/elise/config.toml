@@ -1,10 +1,10 @@
 seed = 69
 
 [network_params]
-
-[weight_params]
 num_lat = 50
 num_vis = 13
+
+[weight_params]
 p = 0.5
 q = 0.3
 p0 = 0.1

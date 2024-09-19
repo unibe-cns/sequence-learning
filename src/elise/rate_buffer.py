@@ -18,4 +18,17 @@ class Buffer(ABC):
         pass
 
 
+class RollBuffer:
+    def __init__(self, buffer_size: int):
+        self.size = buffer_size
+        self.depth = 0
+        self.buffer = []
+
+    def get_buffer(self):
+        pass
+
+    def roll(self, update):
+        pass
+
+
 # Your amazing buffer goes here

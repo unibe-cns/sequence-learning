@@ -65,11 +65,10 @@ class NeuronConfig:
 
 
 class FullConfig:
-    _instance = None
-
-    def _initialize(self, config_file: str):
+    def __init__(self, config_file: str):
         config = Config(config_file)
         self.seed: int = config.get_section("").get("seed", 69)
+        self.network_params = NetworkConfig(config.get_section("network_params"))
         self.weight_params = WeightConfig(config.get_section("weight_params"))
         self.simulation_params = SimulationConfig(
             config.get_section("simulation_params")
