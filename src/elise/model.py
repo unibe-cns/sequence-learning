@@ -14,9 +14,6 @@ class Weights(ABC):
     """
 
     def __init__(self, weight_config: WeightConfig, num_vis, num_lat):
-        self.connections_in = None
-        self.connections_out = None
-        self.weights = None
         self.num_vis = num_vis
         self.num_lat = num_lat
 
@@ -41,7 +38,9 @@ class DendriticWeights(Weights):
     def create_weight_matrix(self, num_vis, num_lat):
         # Implement the dendritic weight matrix creation logic here
         # Using self.W_out_out, self.W_out_lat, self.W_lat_out, self.W_lat_lat
-        pass
+        weight_matrix = None
+
+        return weight_matrix
 
 
 class SomaticWeights(Weights):
@@ -55,7 +54,6 @@ class SomaticWeights(Weights):
         self.q = weight_config.q
         self.p0 = weight_config.p0
         self.p_first = 1 - self.p0
-        self.weights = self.create_weight_matrix(self.num_vis, self.num_lat)
 
     def create_weight_matrix(
         self, num_vis, num_lat
@@ -125,9 +123,7 @@ class SomaticWeights(Weights):
         if np.sum(weight_matrix) != np.sum(connections_in) - num_vis:
             print("Problem with total connections")
 
-        self.weights = weight_matrix
-        self.connections_in = connections_in
-        self.connections_out = connections_out
+        return weight_matrix
 
 
 class Neurons:
@@ -177,12 +173,11 @@ class Network:
         self.num_lat = network_params.num_lat
         self.num_vis = network_params.num_vis
         self.num_all = self.num_lat + self.num_vis
-
-        self.dendritic_weights = dendritic_weights(
+        self.dendritic_weights = dendritic_weights.create_weight_matrix(
             weight_params, self.num_lat, self.num_vis
         )
-        self.somatic_weights = somatic_weights(
-            weight_params, self.num_lat, self.num_vis
+        self.somatic_weights = somatic_weights.create_weight_matrix(
+            weight_params, self.num_vis, self.num_lat
         )
         self.neurons = neurons(neuron_params, self.num_all, rate_buffer)
 

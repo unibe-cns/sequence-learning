@@ -17,6 +17,12 @@ class Simulation:
     def run(self):
         pass
 
+    def train(self):
+        pass
+
+    def validate(self):
+        pass
+
 
 if __name__ == "__main__":
     # Load config file
