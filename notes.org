@@ -1,18 +1,19 @@
 #+title: Notes
 
 * TODOs
-- [ ] consider torch vs JAX vs cupy
-- [ ] Logging
-- [ ]
-
-| Package | Upsides | Downsides | Other considerations |
-|---------+---------+-----------+----------------------|
-| Jax     |         |           |                      |
-|---------+---------+-----------+----------------------|
-| Torch   |         |           |                      |
-|---------+---------+-----------+----------------------|
-| Cupy    |         |           |                      |
-|---------+---------+-----------+----------------------|
+- Dynamical ODE's
+- Simulation.simulate
+  - Validation
+  - Training
+- Dataloader
+  - Input format
+  - Possible datasets
+  - Transform function
+- Config handling
+- Experiment Handling
+  - Logging
+  - Sacred
+- Folder handling
 
 
 * Concerns with ODEint
