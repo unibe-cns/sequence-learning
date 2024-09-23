@@ -1,18 +1,30 @@
 #+title: Notes
 
 * TODOs
-- [ ] consider torch vs JAX vs cupy
-- [ ] Logging
-- [ ]
+- Dynamical ODE's
+- Simulation.simulate
+  - Validation
+  - Training
+- Dataloader
+  - Input format
+  - Possible datasets
+  - Transform function
+- Config handling
+- Experiment Handling
+  - Logging
+  - Sacred
+- Folder handling
 
-| Package | Upsides | Downsides | Other considerations |
-|---------+---------+-----------+----------------------|
-| Jax     |         |           |                      |
-|---------+---------+-----------+----------------------|
-| Torch   |         |           |                      |
-|---------+---------+-----------+----------------------|
-| Cupy    |         |           |                      |
-|---------+---------+-----------+----------------------|
+
+* Concerns with ODEint
+- Memory of the solution produced by odeint
+- Intermediate time steps on Buffer lead to poor approximation
+- Behaviour of the buffer within the ODE
+  - Class persistent or copied?
+  - What happens during multiple calls to Buffer class (e.g during RungeKutta)
+
+* Organization
+- Seperate files for separate functions
 
 * Rules
 - Functions
@@ -28,7 +40,6 @@
     1. Create fork
     2. Clone fork
     3. Make edits in branch
-
 
 #+BEGIN_SRC python :eval no
 # Python-like pseudocode
