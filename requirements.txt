@@ -18,5 +18,3 @@ setuptools >= 67.0
 numpy
 matplotlib
 jupyterlab
-pytorch
-torchvision
