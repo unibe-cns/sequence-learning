@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from elise.ratebuffer import Buffer
+from elise.rate_buffer import Buffer
 
 
 @pytest.fixture
