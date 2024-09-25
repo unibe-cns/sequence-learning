@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 import pytest
 
-from seqlearn.main import SomaticWeights, WeightConfig
+from elise.model import SomaticWeights, WeightConfig
 
 
 @pytest.fixture

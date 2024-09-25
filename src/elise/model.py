@@ -4,8 +4,9 @@ from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
-from config import NetworkConfig, NeuronConfig, WeightConfig
-from rate_buffer import Buffer
+
+from .config import NetworkConfig, NeuronConfig, WeightConfig
+from .rate_buffer import Buffer
 
 
 class Weights(ABC):
