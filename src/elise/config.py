@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
+import tomllib as toml
 from dataclasses import dataclass
 from typing import Any, Dict
-
-import toml
 
 
 class Config:
@@ -26,10 +25,10 @@ class WeightConfig:
     q: float = 0.3
     p0: float = 0.1
     sparsity: float = 0.3
-    W_out_out: list = [0.0, 0.5]
-    W_out_lat: list = [0.0, 0.5]
-    W_lat_lat: list = [0.0, 0.5]
-    W_lat_out: list = [0.0, 0.5]
+    W_out_out: list = (0.0, 0.5)
+    W_out_lat: list = (0.0, 0.5)
+    W_lat_lat: list = (0.0, 0.5)
+    W_lat_out: list = (0.0, 0.5)
     d_som_min: int = 5
     d_som_max: int = 15
     d_den_min: int = 5
@@ -60,8 +59,8 @@ class NeuronConfig:
     g_inh: float = 6.0
     a: float = 0.3
     b: float = -58.0
-    d_den: list = [5, 15]
-    d_som: list = [5, 15]
+    d_den: list = (5, 15)
+    d_som: list = (5, 15)
     d_int: int = 25
 
 
