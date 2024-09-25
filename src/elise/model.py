@@ -54,6 +54,7 @@ class SomaticWeights(Weights):
         self.q = weight_config.q
         self.p0 = weight_config.p0
         self.p_first = 1 - self.p0
+        self.rng = np.random.default_rng(seed=weight_config.som_seed)
 
     def create_weight_matrix(
         self, num_vis, num_lat
@@ -88,7 +89,7 @@ class SomaticWeights(Weights):
                         prob_out = np.power(self.p, connections_out[idx_pre])
 
                     # Test for formation
-                    formation = np.random.binomial(1, prob_out)
+                    formation = self.rng.binomial(1, prob_out)
                     if not formation:
                         # Remove neuron pre from list of unspent neurons
                         neurons_unspent = neurons_unspent[neurons_unspent != idx_pre]
@@ -101,9 +102,9 @@ class SomaticWeights(Weights):
 
                         formed = 0
                         while not formed:
-                            post_idx = np.random.choice(possible_post)
+                            post_idx = self.rng.choice(possible_post)
                             prob_in = np.power(self.q, connections_in[post_idx])
-                            accept = np.random.binomial(1, prob_in)
+                            accept = self.rng.binomial(1, prob_in)
                             if accept:
                                 # Add connection to matrix
                                 weight_matrix[post_idx, idx_pre] = 1
