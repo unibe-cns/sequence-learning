@@ -1,16 +1,7 @@
 #!/usr/bin/env python3
 import tomllib as toml
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Any, Dict
-
-
-class Config:
-    def __init__(self, config_file: str):
-        with open(config_file, "r") as f:
-            self._config = toml.load(f)
-
-    def get_section(self, section: str) -> Dict[str, Any]:
-        return self._config.get(section, {})
 
 
 @dataclass
@@ -64,13 +55,35 @@ class NeuronConfig:
     d_int: int = 25
 
 
+class Config:
+    def __init__(self, config_file: str):
+        with open(config_file, "rb") as f:
+            self._config = toml.load(f)
+
+    def get_section(self, section: str) -> Dict[str, Any]:
+        return self._config.get(section, {})
+
+
 class FullConfig:
     def __init__(self, config_file: str):
         config = Config(config_file)
         self.seed: int = config.get_section("").get("seed", 69)
-        self.network_params = NetworkConfig(config.get_section("network_params"))
-        self.weight_params = WeightConfig(config.get_section("weight_params"))
-        self.simulation_params = SimulationConfig(
-            config.get_section("simulation_params")
+        self.network_params = self._create_config(
+            NetworkConfig, config.get_section("network_params")
         )
-        self.neuron_params = NeuronConfig(config.get_section("neuron_params"))
+        self.weight_params = self._create_config(
+            WeightConfig, config.get_section("weight_params")
+        )
+        self.simulation_params = self._create_config(
+            SimulationConfig, config.get_section("simulation_params")
+        )
+        self.neuron_params = self._create_config(
+            NeuronConfig, config.get_section("neuron_params")
+        )
+
+    def _create_config(self, config_class, config_dict: Dict[str, Any]):
+        kwargs = {}
+        for field in fields(config_class):
+            if field.name in config_dict:
+                kwargs[field.name] = config_dict[field.name]
+        return config_class(**kwargs)
