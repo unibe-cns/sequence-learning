@@ -14,9 +14,8 @@ class Weights(ABC):
     Base class for weight matrices in neural networks.
     """
 
-    def __init__(self, weight_config: WeightConfig, num_vis, num_lat):
-        self.num_vis = num_vis
-        self.num_lat = num_lat
+    def __init__(self, weight_config: WeightConfig):
+        pass
 
     @abstractmethod
     def create_weight_matrix(self, num_vis, num_lat):
