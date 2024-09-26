@@ -18,3 +18,5 @@ setuptools >= 67.0
 numpy
 matplotlib
 jupyterlab
+scipy
+numba
