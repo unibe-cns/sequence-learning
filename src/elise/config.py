@@ -17,11 +17,11 @@ class WeightConfig:
     p: float = 0.5
     q: float = 0.3
     p0: float = 0.1
-    sparsity: float = 0.3
-    W_out_out: list = (0.0, 0.5)
-    W_out_lat: list = (0.0, 0.5)
+    den_spars: float = 0.3
+    W_vis_vis: list = (0.0, 0.5)
+    W_vis_lat: list = (0.0, 0.5)
     W_lat_lat: list = (0.0, 0.5)
-    W_lat_out: list = (0.0, 0.5)
+    W_lat_vis: list = (0.0, 0.5)
     d_som_min: int = 5
     d_som_max: int = 15
     d_den_min: int = 5

@@ -29,9 +29,9 @@ class DendriticWeights(Weights):
 
     def __init__(self, weight_config: WeightConfig):
         super().__init__(weight_config)
-        self.W_out_out = weight_config.W_out_out
-        self.W_out_lat = weight_config.W_out_lat
-        self.W_lat_out = weight_config.W_lat_out
+        self.W_vis_vis = weight_config.W_vis_vis
+        self.W_vis_lat = weight_config.W_vis_lat
+        self.W_lat_vis = weight_config.W_lat_vis
         self.W_lat_lat = weight_config.W_lat_lat
 
     def create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
