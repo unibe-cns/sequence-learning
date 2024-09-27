@@ -37,9 +37,27 @@ class DendriticWeights(Weights):
     def create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         # Implement the dendritic weight matrix creation logic here
         # Using self.W_out_out, self.W_out_lat, self.W_lat_out, self.W_lat_lat
-        weight_matrix = None
+        # Initialize weight matrix
+        weights = np.zeros((num_vis + num_lat, num_vis + num_lat))
 
-        return weight_matrix
+        # Lat to Lat
+        weights[num_vis:, num_vis:] = np.random.uniform(
+            self.W_lat_lat[0], self.W_lat_lat[1], (num_lat, num_lat)
+        )
+        # Lat to Vis
+        weights[num_vis:, :num_vis] = np.random.uniform(
+            self.W_lat_vis[0], self.W_lat_vis[1], (num_lat, num_vis)
+        )
+        # Vis to Lat
+        weights[:num_vis, num_vis:] = np.random.uniform(
+            self.W_vis_lat[0], self.W_vis_lat[1], (num_vis, num_lat)
+        )
+        # Vis to Vis
+        weights[:num_vis, :num_vis:] = np.random.uniform(
+            self.W_vis_vis[0], self.W_vis_vis[1], (num_vis, num_vis)
+        )
+
+        return weights
 
 
 class SomaticWeights(Weights):
