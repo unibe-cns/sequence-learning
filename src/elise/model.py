@@ -27,13 +27,12 @@ class DendriticWeights(Weights):
     Class for creating dendritic weight matrices.
     """
 
-    def __init__(self, weight_config: WeightConfig, num_vis, num_lat):
-        super().__init__(weight_config, num_vis, num_lat)
+    def __init__(self, weight_config: WeightConfig):
+        super().__init__(weight_config)
         self.W_out_out = weight_config.W_out_out
         self.W_out_lat = weight_config.W_out_lat
         self.W_lat_out = weight_config.W_lat_out
         self.W_lat_lat = weight_config.W_lat_lat
-        self.weights = self.create_weight_matrix(self.num_vis, self.num_lat)
 
     def create_weight_matrix(self, num_vis, num_lat):
         # Implement the dendritic weight matrix creation logic here
@@ -48,8 +47,8 @@ class SomaticWeights(Weights):
     Class for creating somatic weight matrices.
     """
 
-    def __init__(self, weight_config: WeightConfig, num_vis, num_lat):
-        super().__init__(weight_config, num_vis, num_lat)
+    def __init__(self, weight_config: WeightConfig):
+        super().__init__(weight_config)
         self.p = weight_config.p
         self.q = weight_config.q
         self.p0 = weight_config.p0
