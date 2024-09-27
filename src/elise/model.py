@@ -18,7 +18,7 @@ class Weights(ABC):
         pass
 
     @abstractmethod
-    def create_weight_matrix(self, num_vis, num_lat):
+    def create_weight_matrix(self, num_vis: int, num_lat: int):
         pass
 
 
@@ -34,7 +34,7 @@ class DendriticWeights(Weights):
         self.W_lat_out = weight_config.W_lat_out
         self.W_lat_lat = weight_config.W_lat_lat
 
-    def create_weight_matrix(self, num_vis, num_lat):
+    def create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         # Implement the dendritic weight matrix creation logic here
         # Using self.W_out_out, self.W_out_lat, self.W_lat_out, self.W_lat_lat
         weight_matrix = None
@@ -55,9 +55,7 @@ class SomaticWeights(Weights):
         self.p_first = 1 - self.p0
         self.rng = np.random.default_rng(seed=weight_config.som_seed)
 
-    def create_weight_matrix(
-        self, num_vis, num_lat
-    ) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
+    def create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
         Create a somatic weight matrix based on probabilistic connection rules.
         """
