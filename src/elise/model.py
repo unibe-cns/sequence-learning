@@ -136,7 +136,7 @@ class Neurons:
         self.E_l = neuron_params.E_l
         self.E_exc = neuron_params.E_exc
         self.E_inh = neuron_params.E_inh
-        self.g_lat = neuron_params.g_lat
+        self.g_l = neuron_params.g_l
         self.g_den = neuron_params.g_den
         self.g_exc = neuron_params.g_exc
         self.g_inh = neuron_params.g_inh
@@ -145,6 +145,7 @@ class Neurons:
         self.d_den = neuron_params.d_den
         self.d_som = neuron_params.d_som
         self.d_int = neuron_params.d_int
+        self.lam = neuron_params.lam
 
         # Dynamical variables
         self.v = np.ones(num_neurons) * self.E_l
