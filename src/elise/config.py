@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!
+# /usr/bin/env python3
 import tomllib as toml
 from dataclasses import dataclass, fields
 from typing import Any, Dict
@@ -58,11 +59,31 @@ class NeuronConfig:
 
 
 class Config:
+    """
+    A class for loading and accessing configuration data from a TOML file.
+
+    Attributes:
+        _config (dict): The loaded configuration data.
+
+    Methods:
+        get_section(section: str) -> Dict[str, Any]:
+    Retrieves a specific section from the configuration.
+    """
+
     def __init__(self, config_file: str):
         with open(config_file, "rb") as f:
             self._config = toml.load(f)
 
     def get_section(self, section: str) -> Dict[str, Any]:
+        """
+        Retrieves a specific section from the configuration.
+
+        Args: section (str): The name of the section to retrieve.
+
+        Returns:
+            Dict[str, Any]:
+            A dictionary containing the configuration data for the specified section.
+        """
         return self._config.get(section, {})
 
 
