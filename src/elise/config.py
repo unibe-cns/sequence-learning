@@ -18,10 +18,10 @@ class WeightConfig:
     q: float = 0.3
     p0: float = 0.1
     den_spars: float = 0.3
-    W_vis_vis: list = (0.0, 0.5)
-    W_vis_lat: list = (0.0, 0.5)
-    W_lat_lat: list = (0.0, 0.5)
-    W_lat_vis: list = (0.0, 0.5)
+    W_vis_vis: tuple = (0.0, 0.5)
+    W_vis_lat: tuple = (0.0, 0.5)
+    W_lat_lat: tuple = (0.0, 0.5)
+    W_lat_vis: tuple = (0.0, 0.5)
     d_som_min: int = 5
     d_som_max: int = 15
     d_den_min: int = 5
@@ -52,8 +52,8 @@ class NeuronConfig:
     g_inh: float = 6.0
     a: float = 0.3
     b: float = -58.0
-    d_den: list = (5, 15)
-    d_som: list = (5, 15)
+    d_den: tuple = (5, 15)
+    d_som: tuple = (5, 15)
     d_int: int = 25
 
 
