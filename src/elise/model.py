@@ -11,6 +11,13 @@ from .rate_buffer import Buffer
 
 class Weights(ABC):
     """
+    Base class for weight matrices for elise networks.
+
+    :param weight_config: Configuration object containing weight parameters.
+    :type weight_config: WeightConfig
+    """
+
+    """
     Base class for weight matrices in neural networks.
     """
 
@@ -35,6 +42,19 @@ class Weights(ABC):
 class DendriticWeights(Weights):
     """
     Class for creating dendritic weight matrices.
+
+    This class implements the Weights interface to generate weight and delay
+    matrices for dendritic connections in a neural network.
+
+    :param weight_config: Configuration object containing weight parameters.
+    :type weight_config: WeightConfig
+
+    :ivar W_vis_vis: Weight range for visible-to-visible connections.
+    :ivar W_vis_lat: Weight range for visible-to-lateral connections.
+    :ivar W_lat_vis: Weight range for lateral-to-visible connections.
+    :ivar W_lat_lat: Weight range for lateral-to-lateral connections.
+    :ivar d_den: Range for dendritic delay values.
+    :ivar rng: Random number generator.
     """
 
     def __init__(self, weight_config: WeightConfig):
@@ -47,12 +67,34 @@ class DendriticWeights(Weights):
         self.rng = np.random.default_rng(seed=weight_config.den_seed)
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        """
+        Generate weight and delay matrices for dendritic connections.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: A tuple containing the weight matrix and delay matrix.
+        :rtype: Tuple[npt.NDArray]
+        """
         weight_matrix = self._create_weight_matrix(num_vis, num_lat)
         delay_matrix = self._create_delay_matrix(num_vis, num_lat, weight_matrix)
         return weight_matrix, delay_matrix
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
-        # Initialize weight matrix
+        """
+        Create a dendritic weight matrix.
+
+        This method generates a weight matrix for dendritic
+        connections using the configured weight ranges.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: The generated weight matrix.
+        :rtype: npt.NDArray
+        """
         weights = np.zeros((num_vis + num_lat, num_vis + num_lat))
         weights[num_vis:, num_vis:] = self.rng.uniform(
             self.W_lat_lat[0], self.W_lat_lat[1], (num_lat, num_lat)
@@ -72,6 +114,19 @@ class DendriticWeights(Weights):
     def _create_delay_matrix(
         self, num_vis: int, num_lat: int, weight_matrix: npt.NDArray
     ) -> Tuple[npt.NDArray]:
+        """
+        Create a delay matrix based on the weight matrix.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :param weight_matrix: The weight matrix.
+        :type weight_matrix: npt.NDArray
+        :return: The delay matrix.
+        :rtype: npt.NDArray
+        """
+
         mask = weight_matrix == 0
         delay_matrix = np.random.randint(
             self.d_den[0], self.d_den[1], weight_matrix.shape
@@ -84,6 +139,16 @@ class DendriticWeights(Weights):
 class SomaticWeights(Weights):
     """
     Class for creating somatic weight matrices.
+
+    This class extends the Weights class and provides methods to generate
+    weight and delay matrices for somatic connections in a neural network.
+
+    :ivar p: Probability parameter for outgoing connections.
+    :ivar q: Probability parameter for incoming connections.
+    :ivar p0: Initial probability for the first connection.
+    :ivar p_first: Probability for the first connection (1 - p0).
+    :ivar rng: Random number generator.
+    :ivar d_som: Range for somatic delay values.
     """
 
     def __init__(self, weight_config: WeightConfig):
@@ -96,6 +161,16 @@ class SomaticWeights(Weights):
         self.d_som = weight_config.d_som
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        """
+        Generate weight and delay matrices for somatic connections.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: A tuple containing the weight matrix and delay matrix.
+        :rtype: Tuple[npt.NDArray]
+        """
         weight_matrix = self._create_weight_matrix(num_vis, num_lat)
         delay_matrix = self._create_delay_matrix(num_vis, num_lat, weight_matrix)
         return weight_matrix, delay_matrix
@@ -103,6 +178,18 @@ class SomaticWeights(Weights):
     def _create_delay_matrix(
         self, num_vis: int, num_lat: int, weight_matrix: npt.NDArray
     ) -> Tuple[npt.NDArray]:
+        """
+        Create a delay matrix based on the weight matrix.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :param weight_matrix: The weight matrix.
+        :type weight_matrix: npt.NDArray
+        :return: The delay matrix.
+        :rtype: npt.NDArray
+        """
         mask = weight_matrix == 0
         delay_matrix = np.random.randint(
             self.d_som[0], self.d_som[1], weight_matrix.shape
@@ -113,6 +200,19 @@ class SomaticWeights(Weights):
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
         Create a somatic weight matrix based on probabilistic connection rules.
+
+        This method implements a complex algorithm to generate connections
+        between neurons based on probabilistic rules.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: The generated weight matrix.
+        :rtype: npt.NDArray
+
+        :note: The method uses instance attributes p, q, p0, and rng
+        for its calculations.
         """
 
         num_total = num_vis + num_lat
