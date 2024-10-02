@@ -41,6 +41,7 @@ class DendriticWeights(Weights):
         self.W_vis_lat = weight_config.W_vis_lat
         self.W_lat_vis = weight_config.W_lat_vis
         self.W_lat_lat = weight_config.W_lat_lat
+        self.rng = np.random.default_rng(seed=weight_config.den_seed)
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         weight_matrix = self._create_weight_matrix(num_vis, num_lat)
@@ -50,16 +51,16 @@ class DendriticWeights(Weights):
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         # Initialize weight matrix
         weights = np.zeros((num_vis + num_lat, num_vis + num_lat))
-        weights[num_vis:, num_vis:] = np.random.uniform(
+        weights[num_vis:, num_vis:] = self.rng.uniform(
             self.W_lat_lat[0], self.W_lat_lat[1], (num_lat, num_lat)
         )  # Lat to Lat
-        weights[num_vis:, :num_vis] = np.random.uniform(
+        weights[num_vis:, :num_vis] = self.rng.uniform(
             self.W_lat_vis[0], self.W_lat_vis[1], (num_lat, num_vis)
         )  # Lat to Vis
-        weights[:num_vis, num_vis:] = np.random.uniform(
+        weights[:num_vis, num_vis:] = self.rng.uniform(
             self.W_vis_lat[0], self.W_vis_lat[1], (num_vis, num_lat)
         )  # Vis to Lat
-        weights[:num_vis, :num_vis:] = np.random.uniform(
+        weights[:num_vis, :num_vis:] = self.rng.uniform(
             self.W_vis_vis[0], self.W_vis_vis[1], (num_vis, num_vis)
         )  # Vis to Vis
 
