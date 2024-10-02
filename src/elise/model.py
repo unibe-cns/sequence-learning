@@ -18,15 +18,17 @@ class Weights(ABC):
         pass
 
     @abstractmethod
+    def __call__(self, num_vis: int, num_lat: int):
+        pass
+
+    @abstractmethod
     def _create_weight_matrix(self, num_vis: int, num_lat: int):
         pass
 
     @abstractmethod
-    def _create_delay_matrix(self, num_vis: int, num_lat: int):
-        pass
-
-    @abstractmethod
-    def __call__(self, num_vis: int, num_lat: int):
+    def _create_delay_matrix(
+        self, num_vis: int, num_lat: int, weight_matrix: npt.NDArray
+    ):
         pass
 
 
@@ -41,11 +43,12 @@ class DendriticWeights(Weights):
         self.W_vis_lat = weight_config.W_vis_lat
         self.W_lat_vis = weight_config.W_lat_vis
         self.W_lat_lat = weight_config.W_lat_lat
+        self.d_den = weight_config.d_den
         self.rng = np.random.default_rng(seed=weight_config.den_seed)
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         weight_matrix = self._create_weight_matrix(num_vis, num_lat)
-        delay_matrix = self._create_delay_matrix(num_vis, num_lat)
+        delay_matrix = self._create_delay_matrix(num_vis, num_lat, weight_matrix)
         return weight_matrix, delay_matrix
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
@@ -66,8 +69,15 @@ class DendriticWeights(Weights):
 
         return weights
 
-    def _create_delay_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
-        delay_matrix = None
+    def _create_delay_matrix(
+        self, num_vis: int, num_lat: int, weight_matrix: npt.NDArray
+    ) -> Tuple[npt.NDArray]:
+        mask = weight_matrix == 0
+        delay_matrix = np.random.randint(
+            self.d_den[0], self.d_den[1], weight_matrix.shape
+        )
+        delay_matrix[mask] = 0
+
         return delay_matrix
 
 
@@ -83,14 +93,21 @@ class SomaticWeights(Weights):
         self.p0 = weight_config.p0
         self.p_first = 1 - self.p0
         self.rng = np.random.default_rng(seed=weight_config.som_seed)
+        self.d_som = weight_config.d_som
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         weight_matrix = self._create_weight_matrix(num_vis, num_lat)
-        delay_matrix = self._create_delay_matrix(num_vis, num_lat)
+        delay_matrix = self._create_delay_matrix(num_vis, num_lat, weight_matrix)
         return weight_matrix, delay_matrix
 
-    def _create_delay_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
-        delay_matrix = None
+    def _create_delay_matrix(
+        self, num_vis: int, num_lat: int, weight_matrix: npt.NDArray
+    ) -> Tuple[npt.NDArray]:
+        mask = weight_matrix == 0
+        delay_matrix = np.random.randint(
+            self.d_som[0], self.d_som[1], weight_matrix.shape
+        )
+        delay_matrix[mask] = 0
         return delay_matrix
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
