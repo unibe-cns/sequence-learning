@@ -83,7 +83,7 @@ class FullConfig:
             NeuronConfig, config.get_section("neuron_params")
         )
 
-    def _create_config(self, config_class, config_dict: Dict[str, Any]):
+    def _create_config(self, config_class: Config, config_dict: Dict[str, Any]):
         kwargs = {}
         for field in fields(config_class):
             if field.name in config_dict:
