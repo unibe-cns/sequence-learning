@@ -18,7 +18,15 @@ class Weights(ABC):
         pass
 
     @abstractmethod
-    def create_weight_matrix(self, num_vis: int, num_lat: int):
+    def _create_weight_matrix(self, num_vis: int, num_lat: int):
+        pass
+
+    @abstractmethod
+    def _create_delay_matrix(self, num_vis: int, num_lat: int):
+        pass
+
+    @abstractmethod
+    def __call__(self, num_vis: int, num_lat: int):
         pass
 
 
@@ -34,30 +42,32 @@ class DendriticWeights(Weights):
         self.W_lat_vis = weight_config.W_lat_vis
         self.W_lat_lat = weight_config.W_lat_lat
 
-    def create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
-        # Implement the dendritic weight matrix creation logic here
-        # Using self.W_out_out, self.W_out_lat, self.W_lat_out, self.W_lat_lat
+    def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        weight_matrix = self._create_weight_matrix(num_vis, num_lat)
+        delay_matrix = self._create_delay_matrix(num_vis, num_lat)
+        return weight_matrix, delay_matrix
+
+    def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         # Initialize weight matrix
         weights = np.zeros((num_vis + num_lat, num_vis + num_lat))
-
-        # Lat to Lat
         weights[num_vis:, num_vis:] = np.random.uniform(
             self.W_lat_lat[0], self.W_lat_lat[1], (num_lat, num_lat)
-        )
-        # Lat to Vis
+        )  # Lat to Lat
         weights[num_vis:, :num_vis] = np.random.uniform(
             self.W_lat_vis[0], self.W_lat_vis[1], (num_lat, num_vis)
-        )
-        # Vis to Lat
+        )  # Lat to Vis
         weights[:num_vis, num_vis:] = np.random.uniform(
             self.W_vis_lat[0], self.W_vis_lat[1], (num_vis, num_lat)
-        )
-        # Vis to Vis
+        )  # Vis to Lat
         weights[:num_vis, :num_vis:] = np.random.uniform(
             self.W_vis_vis[0], self.W_vis_vis[1], (num_vis, num_vis)
-        )
+        )  # Vis to Vis
 
         return weights
+
+    def _create_delay_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        delay_matrix = None
+        return delay_matrix
 
 
 class SomaticWeights(Weights):
@@ -73,7 +83,16 @@ class SomaticWeights(Weights):
         self.p_first = 1 - self.p0
         self.rng = np.random.default_rng(seed=weight_config.som_seed)
 
-    def create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+    def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        weight_matrix = self._create_weight_matrix(num_vis, num_lat)
+        delay_matrix = self._create_delay_matrix(num_vis, num_lat)
+        return weight_matrix, delay_matrix
+
+    def _create_delay_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        delay_matrix = None
+        return delay_matrix
+
+    def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
         Create a somatic weight matrix based on probabilistic connection rules.
         """
@@ -190,10 +209,10 @@ class Network:
         self.num_lat = network_params.num_lat
         self.num_vis = network_params.num_vis
         self.num_all = self.num_lat + self.num_vis
-        self.dendritic_weights = dendritic_weights.create_weight_matrix(
+        self.dendritic_weights, self.dendritic_delays = dendritic_weights(
             weight_params, self.num_lat, self.num_vis
         )
-        self.somatic_weights = somatic_weights.create_weight_matrix(
+        self.somatic_weights, self.somatic_delays = somatic_weights(
             weight_params, self.num_vis, self.num_lat
         )
         self.neurons = neurons(neuron_params, self.num_all, rate_buffer)
