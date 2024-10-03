@@ -57,5 +57,4 @@ def test_consistency(default_weight_config, default_network_config):
     matrix2 = sw2.create_weight_matrix(
         default_network_config.num_vis, default_network_config.num_lat
     )
-
-    assert np.all(matrix1 == matrix2)
+    np.testing.assert_allclose(matrix1, matrix2)
