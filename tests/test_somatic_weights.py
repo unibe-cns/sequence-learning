@@ -26,9 +26,7 @@ def default_network_config():
 
 def test_create_weight_matrix_basic(default_weight_config, default_network_config):
     sw = SomaticWeights(default_weight_config)
-    weight_matrix = sw.create_weight_matrix(
-        default_network_config.num_vis, default_network_config.num_lat
-    )
+    weight_matrix = sw(default_network_config.num_vis, default_network_config.num_lat)
 
     assert isinstance(weight_matrix, np.ndarray)
     assert weight_matrix.shape == (63, 63)  # 50 + 13 = 63
@@ -38,9 +36,7 @@ def test_create_weight_matrix_basic(default_weight_config, default_network_confi
 
 def test_connectivity_constraints(default_weight_config, default_network_config):
     sw = SomaticWeights(default_weight_config)
-    weight_matrix = sw.create_weight_matrix(
-        default_network_config.num_vis, default_network_config.num_lat
-    )
+    weight_matrix = sw(default_network_config.num_vis, default_network_config.num_lat)
 
     assert np.all(weight_matrix[:13, :13] == 0)  # No connections between output neurons
     assert np.all(
@@ -51,10 +47,6 @@ def test_connectivity_constraints(default_weight_config, default_network_config)
 def test_consistency(default_weight_config, default_network_config):
     sw1 = SomaticWeights(default_weight_config)
     sw2 = SomaticWeights(default_weight_config)
-    matrix1 = sw1.create_weight_matrix(
-        default_network_config.num_vis, default_network_config.num_lat
-    )
-    matrix2 = sw2.create_weight_matrix(
-        default_network_config.num_vis, default_network_config.num_lat
-    )
+    matrix1 = sw1(default_network_config.num_vis, default_network_config.num_lat)
+    matrix2 = sw2(default_network_config.num_vis, default_network_config.num_lat)
     np.testing.assert_allclose(matrix1, matrix2)
