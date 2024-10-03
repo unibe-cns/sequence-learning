@@ -2,7 +2,7 @@
 # /usr/bin/env python3
 import tomllib as toml
 from dataclasses import dataclass, fields
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 
 @dataclass
@@ -47,15 +47,16 @@ class NeuronConfig:
     E_l: float = -70.0
     E_exc: float = 0.0
     E_inh: float = -75.0
-    g_lat: float = 0.1
+    g_l: float = 0.1
     g_den: float = 2.0
     g_exc: float = 0.3
     g_inh: float = 6.0
     a: float = 0.3
     b: float = -58.0
-    d_den: tuple = (5, 15)
-    d_som: tuple = (5, 15)
+    d_den: Tuple[int, int] = (5, 15)
+    d_som: Tuple[int, int] = (5, 15)
     d_int: int = 25
+    lam: float = 0.6
 
 
 class Config:

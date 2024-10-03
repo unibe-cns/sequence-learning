@@ -35,7 +35,7 @@ C_u = 1.0
 E_l = -70.0
 E_exc = 0.0
 E_inh = -75.0
-g_lat = 0.1
+g_l = 0.1
 g_den = 2.0
 g_exc = 0.3
 g_inh = 6.0
@@ -44,6 +44,7 @@ b   = -58.0
 d_den = [5, 15]
 d_som = [5, 15]
 d_int = 25
+lam: 0.6
 
 [data_params]
 pattern_length = 22
