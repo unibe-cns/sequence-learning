@@ -4,8 +4,9 @@ from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
-from config import NetworkConfig, NeuronConfig, WeightConfig
-from rate_buffer import Buffer
+
+from .config import NetworkConfig, NeuronConfig, WeightConfig
+from .rate_buffer import Buffer
 
 
 class Weights(ABC):
@@ -13,12 +14,11 @@ class Weights(ABC):
     Base class for weight matrices in neural networks.
     """
 
-    def __init__(self, weight_config: WeightConfig, num_vis, num_lat):
-        self.num_vis = num_vis
-        self.num_lat = num_lat
+    def __init__(self, weight_config: WeightConfig):
+        pass
 
     @abstractmethod
-    def create_weight_matrix(self, num_vis, num_lat):
+    def create_weight_matrix(self, num_vis: int, num_lat: int):
         pass
 
 
@@ -27,15 +27,14 @@ class DendriticWeights(Weights):
     Class for creating dendritic weight matrices.
     """
 
-    def __init__(self, weight_config: WeightConfig, num_vis, num_lat):
-        super().__init__(weight_config, num_vis, num_lat)
-        self.W_out_out = weight_config.W_out_out
-        self.W_out_lat = weight_config.W_out_lat
-        self.W_lat_out = weight_config.W_lat_out
+    def __init__(self, weight_config: WeightConfig):
+        super().__init__(weight_config)
+        self.W_vis_vis = weight_config.W_vis_vis
+        self.W_vis_lat = weight_config.W_vis_lat
+        self.W_lat_vis = weight_config.W_lat_vis
         self.W_lat_lat = weight_config.W_lat_lat
-        self.weights = self.create_weight_matrix(self.num_vis, self.num_lat)
 
-    def create_weight_matrix(self, num_vis, num_lat):
+    def create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         # Implement the dendritic weight matrix creation logic here
         # Using self.W_out_out, self.W_out_lat, self.W_lat_out, self.W_lat_lat
         weight_matrix = None
@@ -48,16 +47,15 @@ class SomaticWeights(Weights):
     Class for creating somatic weight matrices.
     """
 
-    def __init__(self, weight_config: WeightConfig, num_vis, num_lat):
-        super().__init__(weight_config, num_vis, num_lat)
+    def __init__(self, weight_config: WeightConfig):
+        super().__init__(weight_config)
         self.p = weight_config.p
         self.q = weight_config.q
         self.p0 = weight_config.p0
         self.p_first = 1 - self.p0
+        self.rng = np.random.default_rng(seed=weight_config.som_seed)
 
-    def create_weight_matrix(
-        self, num_vis, num_lat
-    ) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
+    def create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
         Create a somatic weight matrix based on probabilistic connection rules.
         """
@@ -88,7 +86,7 @@ class SomaticWeights(Weights):
                         prob_out = np.power(self.p, connections_out[idx_pre])
 
                     # Test for formation
-                    formation = np.random.binomial(1, prob_out)
+                    formation = self.rng.binomial(1, prob_out)
                     if not formation:
                         # Remove neuron pre from list of unspent neurons
                         neurons_unspent = neurons_unspent[neurons_unspent != idx_pre]
@@ -101,9 +99,9 @@ class SomaticWeights(Weights):
 
                         formed = 0
                         while not formed:
-                            post_idx = np.random.choice(possible_post)
+                            post_idx = self.rng.choice(possible_post)
                             prob_in = np.power(self.q, connections_in[post_idx])
-                            accept = np.random.binomial(1, prob_in)
+                            accept = self.rng.binomial(1, prob_in)
                             if accept:
                                 # Add connection to matrix
                                 weight_matrix[post_idx, idx_pre] = 1

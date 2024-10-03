@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!
+# /usr/bin/env python3
 import tomllib as toml
 from dataclasses import dataclass, fields
 from typing import Any, Dict, Tuple
@@ -12,14 +13,16 @@ class NetworkConfig:
 
 @dataclass
 class WeightConfig:
+    som_seed: int = 42
+    den_seed: int = 42
     p: float = 0.5
     q: float = 0.3
     p0: float = 0.1
-    sparsity: float = 0.3
-    W_out_out: list = (0.0, 0.5)
-    W_out_lat: list = (0.0, 0.5)
-    W_lat_lat: list = (0.0, 0.5)
-    W_lat_out: list = (0.0, 0.5)
+    den_spars: float = 0.3
+    W_vis_vis: tuple = (0.0, 0.5)
+    W_vis_lat: tuple = (0.0, 0.5)
+    W_lat_lat: tuple = (0.0, 0.5)
+    W_lat_vis: tuple = (0.0, 0.5)
     d_som_min: int = 5
     d_som_max: int = 15
     d_den_min: int = 5
@@ -57,11 +60,31 @@ class NeuronConfig:
 
 
 class Config:
+    """
+    A class for loading and accessing configuration data from a TOML file.
+
+    Attributes:
+        _config (dict): The loaded configuration data.
+
+    Methods:
+        get_section(section: str) -> Dict[str, Any]:
+    Retrieves a specific section from the configuration.
+    """
+
     def __init__(self, config_file: str):
         with open(config_file, "rb") as f:
             self._config = toml.load(f)
 
     def get_section(self, section: str) -> Dict[str, Any]:
+        """
+        Retrieves a specific section from the configuration.
+
+        Args: section (str): The name of the section to retrieve.
+
+        Returns:
+            Dict[str, Any]:
+            A dictionary containing the configuration data for the specified section.
+        """
         return self._config.get(section, {})
 
 
@@ -82,7 +105,7 @@ class FullConfig:
             NeuronConfig, config.get_section("neuron_params")
         )
 
-    def _create_config(self, config_class, config_dict: Dict[str, Any]):
+    def _create_config(self, config_class: Config, config_dict: Dict[str, Any]):
         kwargs = {}
         for field in fields(config_class):
             if field.name in config_dict:
