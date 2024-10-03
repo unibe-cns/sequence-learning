@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-
-import unittest
-
 import numpy as np
 import pytest
 
@@ -62,7 +59,3 @@ def test_consistency(default_weight_config, default_network_config):
     )
 
     assert np.all(matrix1 == matrix2)
-
-
-if __name__ == "__main__":
-    unittest.main()
