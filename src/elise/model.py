@@ -29,9 +29,21 @@ class Weights(ABC):
 class DendriticWeights(Weights):
     """
     Class for creating dendritic weight matrices.
+
+    This class extends the base Weights class and provides functionality to create
+    dendritic weight matrices based on the given configuration.
+
+    :param weight_config: Configuration object containing weight parameters.
+    :type weight_config: WeightConfig
     """
 
     def __init__(self, weight_config: WeightConfig):
+        """
+        Initialize the DendriticWeights object.
+
+        :param weight_config: Configuration object containing weight parameters.
+        :type weight_config: WeightConfig
+        """
         super().__init__(weight_config)
         self.W_vis_vis = weight_config.W_vis_vis
         self.W_vis_lat = weight_config.W_vis_lat
@@ -40,10 +52,33 @@ class DendriticWeights(Weights):
         self.rng = np.random.default_rng(seed=weight_config.den_seed)
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        """
+        Create a dendritic weight matrix.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: A tuple containing the created weight matrix.
+        :rtype: Tuple[npt.NDArray]
+        """
         weight_matrix = self._create_weight_matrix(num_vis, num_lat)
         return weight_matrix
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        """
+        Create the dendritic weight matrix.
+
+        This method initializes a weight matrix and fills it with random values
+        based on the configuration parameters.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: The created weight matrix.
+        :rtype: Tuple[npt.NDArray]
+        """
         # Initialize weight matrix
         weights = np.zeros((num_vis + num_lat, num_vis + num_lat))
         weights[num_vis:, num_vis:] = self.rng.uniform(
@@ -68,9 +103,21 @@ class DendriticWeights(Weights):
 class SomaticWeights(Weights):
     """
     Class for creating somatic weight matrices.
+
+    This class extends the base Weights class and provides functionality to create
+    somatic weight matrices based on probabilistic connection rules.
+
+    :param weight_config: Configuration object containing weight parameters.
+    :type weight_config: WeightConfig
     """
 
     def __init__(self, weight_config: WeightConfig):
+        """
+        Initialize the SomaticWeights object.
+
+        :param weight_config: Configuration object containing weight parameters.
+        :type weight_config: WeightConfig
+        """
         super().__init__(weight_config)
         self.p = weight_config.p
         self.q = weight_config.q
@@ -79,14 +126,33 @@ class SomaticWeights(Weights):
         self.rng = np.random.default_rng(seed=weight_config.som_seed)
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        """
+        Create a somatic weight matrix.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: A tuple containing the created weight matrix.
+        :rtype: Tuple[npt.NDArray]
+        """
         weight_matrix = self._create_weight_matrix(num_vis, num_lat)
         return weight_matrix
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
-        Create a somatic weight matrix based on probabilistic connection rules.
-        """
+        Create the somatic weight matrix based on probabilistic connection rules.
 
+        This method implements a complex algorithm to create connections between
+        neurons based on various probabilities and rules.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: The created weight matrix.
+        :rtype: Tuple[npt.NDArray]
+        """
         num_total = num_vis + num_lat
         neurons_outgoing = np.arange(num_total)
         neurons_incoming = np.arange(num_vis, num_total)
