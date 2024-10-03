@@ -22,10 +22,6 @@ class Weights(ABC):
         pass
 
     @abstractmethod
-    def _create_delay_matrix(self, num_vis: int, num_lat: int):
-        pass
-
-    @abstractmethod
     def __call__(self, num_vis: int, num_lat: int):
         pass
 
@@ -44,8 +40,7 @@ class DendriticWeights(Weights):
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         weight_matrix = self._create_weight_matrix(num_vis, num_lat)
-        delay_matrix = self._create_delay_matrix(num_vis, num_lat)
-        return weight_matrix, delay_matrix
+        return weight_matrix
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         # Initialize weight matrix
@@ -63,11 +58,10 @@ class DendriticWeights(Weights):
             self.W_vis_vis[0], self.W_vis_vis[1], (num_vis, num_vis)
         )  # Vis to Vis
 
-        return weights
+        # remove self connections
+        np.fill_diagonal(weights, 0)
 
-    def _create_delay_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
-        delay_matrix = None
-        return delay_matrix
+        return weights
 
 
 class SomaticWeights(Weights):
@@ -85,12 +79,7 @@ class SomaticWeights(Weights):
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         weight_matrix = self._create_weight_matrix(num_vis, num_lat)
-        delay_matrix = self._create_delay_matrix(num_vis, num_lat)
-        return weight_matrix, delay_matrix
-
-    def _create_delay_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
-        delay_matrix = None
-        return delay_matrix
+        return weight_matrix
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
@@ -209,10 +198,10 @@ class Network:
         self.num_lat = network_params.num_lat
         self.num_vis = network_params.num_vis
         self.num_all = self.num_lat + self.num_vis
-        self.dendritic_weights, self.dendritic_delays = dendritic_weights(
+        self.dendritic_weights = dendritic_weights(
             weight_params, self.num_lat, self.num_vis
         )
-        self.somatic_weights, self.somatic_delays = somatic_weights(
+        self.somatic_weights = somatic_weights(
             weight_params, self.num_vis, self.num_lat
         )
         self.neurons = neurons(neuron_params, self.num_all, rate_buffer)
