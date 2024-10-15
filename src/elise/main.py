@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Main script for creating weight matrix."""
-from config import FullConfig
-from dataloader import Dataloader
-from logger import Logger
-from model import DendriticWeights, Network, Neurons, SomaticWeights
-from rate_buffer import RollBuffer
+from .config import FullConfig
+from .dataloader import Dataloader
+from .logger import Logger
+from .model import DendriticWeights, Network, Neurons, SomaticWeights
+from .rate_buffer import RollBuffer
 
 
 # IMplement simulation class with dependency inversion principle

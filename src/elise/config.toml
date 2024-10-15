@@ -8,16 +8,17 @@ num_vis = 13
 p = 0.5
 q = 0.3
 p0 = 0.1
-sparsity = 0.3
-W_out_out = [0.0, 0.5]
-W_out_lat = [0.0, 0.5]
+som_seed = 77
+den_seed = 42
+den_spars = 0.3
+W_vis_vis = [0.0, 0.5]
+W_vis_lat = [0.0, 0.5]
 W_lat_lat = [0.0, 0.5]
-W_lat_out = [0.0, 0.5]
+W_lat_vis = [0.0, 0.5]
 d_som_min = 5
 d_som_max = 15
 d_den_min = 5
 d_den_max = 15
-
 
 [simulation_params]
 input = 'test'
