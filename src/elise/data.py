@@ -1,8 +1,10 @@
 """Module for creating datasets and loading them into the model."""
+
 # /usr/bin/env python3
 
 
 # from abc import ABC, abstractmethod
+from typing import Any, Callable, List
 
 # import numpy as np
 import numpy.typing as npt
@@ -20,7 +22,7 @@ class Pattern:
         self._pattern = pattern
         self.pattern = self._pattern  # do nothing here!
         self.dt = dt
-        self.t_max = self.dt * self.__len__()
+        self.dur = self.dt * self.__len__()
         self.shape = self.pattern.shape
 
     def __repr__(self) -> str:
@@ -31,7 +33,7 @@ class Pattern:
         """Return the length of the pattern."""
         return self.pattern.shape[0]
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> Any:
         """Get item."""
         return self.pattern[idx]
 
@@ -54,5 +56,58 @@ class SequentialPattern(Pattern):
 
 
 class Dataloader:
-    def __init__(self):
-        pass
+    """Dataloader.
+
+    maybe introduce pre- and online-transforms?
+
+    """
+
+    def __init__(
+        self,
+        pat: Pattern,
+        pre_transforms: List[Callable] = [],
+        online_transforms: List[Callable] = [],
+    ) -> None:
+        """Docstring."""
+        self.pat = pat
+        self.dur = pat.dur
+        self.dt = pat.dt
+
+        self.online_transforms = online_transforms
+
+        # apply pre-transforms directly once
+        for transform in pre_transforms:
+            self.pat = transform(self.pat)
+
+    def _time_to_idx(self, t: float) -> int:
+        breakpoint()
+        return int((t % self.dur) / self.dt)
+
+    def _apply_online_transforms(self, pat_1d):
+        for transform in self.online_transforms:
+            pat_1d = transform(pat_1d)
+        return pat_1d
+
+    def __call__(self, t: float, offset: float = 1e-6):
+        """When the dataloader is called, the correct pattern at time t is returned.
+
+        example:
+        for t in np.arange(0, 100, 0.1):
+            pat = dataloader(t)
+            my_simulation.step(t, u_inp=pat,...)
+        """
+        idx = self._time_to_idx(t)
+        pat_t = self.pat[idx]
+
+        pat_t = self._apply_online_transforms(pat_t + offset)
+
+        return pat_t
+
+    def iter(self, t_start, t_stop, dt):
+        """Use dataloader as an iterator/iterable.
+
+        example:
+        for t, pat in dataloader.iter(t_start, t_stop, dt):
+            my_simulation.step(t, u_inp=pat,...)
+        """
+        return self.Iterator(...)
