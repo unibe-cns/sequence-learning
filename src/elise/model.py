@@ -57,6 +57,7 @@ class DendriticWeights(Weights):
         self.W_vis_lat = weight_params.W_vis_lat
         self.W_lat_vis = weight_params.W_lat_vis
         self.W_lat_lat = weight_params.W_lat_lat
+        self.d_den = weight_params.d_den
         self.rng = np.random.default_rng(seed=weight_params.den_seed)
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray, npt.NDArray]:
@@ -67,11 +68,30 @@ class DendriticWeights(Weights):
         :type num_vis: int
         :param num_lat: Number of lateral neurons.
         :type num_lat: int
-        :return: A tuple containing the created weight matrix.
+        :return: A tuple containing the created weight matrix and associated delays.
         :rtype: Tuple[npt.NDArray]
         """
         weight_matrix = self._create_weight_matrix(num_vis, num_lat)
-        return weight_matrix
+        delays = self._create_delays(num_vis, num_lat)
+        return weight_matrix, delays
+
+    def _create_delays(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        "Create the delays associated with the weight matrix"
+        """
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: A tuple containing the created delays.
+        :rtype: Tuple[npt.NDArray]
+        """
+
+        num_total = num_vis + num_lat
+        d_min = self.d_den[0]
+        d_max = self.d_den[1]
+        delays = self.rng.integers(d_min, d_max, num_total)
+
+        return delays
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
@@ -127,6 +147,7 @@ class SomaticWeights(Weights):
         :type weight_params: WeightConfig
         """
         super().__init__(weight_params)
+        self.d_som = weight_params.d_som
         self.p = weight_params.p
         self.q = weight_params.q
         self.p0 = weight_params.p0
@@ -141,11 +162,30 @@ class SomaticWeights(Weights):
         :type num_vis: int
         :param num_lat: Number of lateral neurons.
         :type num_lat: int
-        :return: A tuple containing the created weight matrix.
+        :return: A tuple containing the created weight matrix and associated delays.
+        :rtype: Tuple[npt.NDArray, npt.NDArray]
+        """
+        delays = self._create_delays(num_vis, num_lat)
+        weight_matrix = self._create_weight_matrix(num_vis, num_lat)
+        return weight_matrix, delays
+
+    def _create_delays(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        "Create the delays associated with the weight matrix"
+        """
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: A tuple containing the created delays.
         :rtype: Tuple[npt.NDArray]
         """
-        weight_matrix = self._create_weight_matrix(num_vis, num_lat)
-        return weight_matrix
+
+        num_total = num_vis + num_lat
+        d_min = self.d_som[0]
+        d_max = self.d_som[1]
+        delays = self.rng.integers(d_min, d_max, num_total)
+
+        return delays
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
@@ -270,16 +310,24 @@ class Network:
         self.num_lat = network_params.num_lat
         self.num_vis = network_params.num_vis
         self.num_all = self.num_lat + self.num_vis
-        self.dendritic_weights = dendritic_weights(
+        self.dendritic_weights, self.delays_den = dendritic_weights(
             weight_params, self.num_lat, self.num_vis
         )
-        self.somatic_weights = somatic_weights(
+        self.somatic_weights, self.delays_som = somatic_weights(
             weight_params, self.num_vis, self.num_lat
         )
         self.neurons = neurons(neuron_params, self.num_all, rate_buffer)
 
     def simulation_step(self, dt):
-        # Implement simulation step logic here
+        # Compute r_den
+        # Compute r_exc
+        # Compute r_inh
+
+        # Run differential equation
+        # Update variables u, v, w, r_bar
+        # Compute new r
+        # Update buffer
+
         pass
 
     def update(self):
