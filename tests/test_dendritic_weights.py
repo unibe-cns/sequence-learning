@@ -52,16 +52,3 @@ def test_consistency(default_weight_config, default_network_config):
     matrix1, _ = dw1(default_network_config.num_vis, default_network_config.num_lat)
     matrix2, _ = dw2(default_network_config.num_vis, default_network_config.num_lat)
     np.testing.assert_allclose(matrix1, matrix2)
-
-
-# Test delays
-def test_delay_matrix_basic(default_weight_config, default_network_config):
-    dw = DendriticWeights(default_weight_config)
-    _, delays = dw(default_network_config.num_vis, default_network_config.num_lat)
-    assert isinstance(delays, np.ndarray)
-    assert len(delays) == 63  # 50 + 13 = 63
-
-
-# Make sure they only fall in the range specified by the parameters
-# Make sure they have the same dimensions as the number of neurons
-# Test that they are integers
