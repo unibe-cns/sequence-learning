@@ -13,8 +13,10 @@ class NetworkConfig:
 
 @dataclass
 class WeightConfig:
-    som_seed: int = 42
-    den_seed: int = 42
+    w_som_seed: int = 42
+    w_den_seed: int = 99
+    d_som_seed: int = 42
+    d_den_seed: int = 99
     p: float = 0.5
     q: float = 0.3
     p0: float = 0.1
