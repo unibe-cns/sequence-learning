@@ -58,7 +58,8 @@ class DendriticWeights(Weights):
         self.W_lat_vis = weight_params.W_lat_vis
         self.W_lat_lat = weight_params.W_lat_lat
         self.d_den = weight_params.d_den
-        self.rng = np.random.default_rng(seed=weight_params.den_seed)
+        self.rng_w = np.random.default_rng(seed=weight_params.w_den_seed)
+        self.rng_d = np.random.default_rng(seed=weight_params.d_den_seed)
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray, npt.NDArray]:
         """
@@ -89,7 +90,7 @@ class DendriticWeights(Weights):
         num_total = num_vis + num_lat
         d_min = self.d_den[0]
         d_max = self.d_den[1]
-        delays = self.rng.integers(d_min, d_max, num_total)
+        delays = self.rng_d.integers(d_min, d_max, num_total)
 
         return delays
 
@@ -109,16 +110,16 @@ class DendriticWeights(Weights):
         """
         # Initialize weight matrix
         weights = np.zeros((num_vis + num_lat, num_vis + num_lat))
-        weights[num_vis:, num_vis:] = self.rng.uniform(
+        weights[num_vis:, num_vis:] = self.rng_w.uniform(
             self.W_lat_lat[0], self.W_lat_lat[1], (num_lat, num_lat)
         )  # Lat to Lat
-        weights[num_vis:, :num_vis] = self.rng.uniform(
+        weights[num_vis:, :num_vis] = self.rng_w.uniform(
             self.W_lat_vis[0], self.W_lat_vis[1], (num_lat, num_vis)
         )  # Lat to Vis
-        weights[:num_vis, num_vis:] = self.rng.uniform(
+        weights[:num_vis, num_vis:] = self.rng_w.uniform(
             self.W_vis_lat[0], self.W_vis_lat[1], (num_vis, num_lat)
         )  # Vis to Lat
-        weights[:num_vis, :num_vis:] = self.rng.uniform(
+        weights[:num_vis, :num_vis:] = self.rng_w.uniform(
             self.W_vis_vis[0], self.W_vis_vis[1], (num_vis, num_vis)
         )  # Vis to Vis
 
@@ -152,7 +153,8 @@ class SomaticWeights(Weights):
         self.q = weight_params.q
         self.p0 = weight_params.p0
         self.p_first = 1 - self.p0
-        self.rng = np.random.default_rng(seed=weight_params.som_seed)
+        self.rng_w = np.random.default_rng(seed=weight_params.w_som_seed)
+        self.rng_d = np.random.default_rng(seed=weight_params.d_som_seed)
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray, npt.NDArray]:
         """
@@ -183,7 +185,7 @@ class SomaticWeights(Weights):
         num_total = num_vis + num_lat
         d_min = self.d_som[0]
         d_max = self.d_som[1]
-        delays = self.rng.integers(d_min, d_max, num_total)
+        delays = self.rng_d.integers(d_min, d_max, num_total)
 
         return delays
 
@@ -227,7 +229,7 @@ class SomaticWeights(Weights):
                         prob_out = np.power(self.p, connections_out[idx_pre])
 
                     # Test for formation
-                    formation = self.rng.binomial(1, prob_out)
+                    formation = self.rng_w.binomial(1, prob_out)
                     if not formation:
                         # Remove neuron pre from list of unspent neurons
                         neurons_unspent = neurons_unspent[neurons_unspent != idx_pre]
@@ -240,9 +242,9 @@ class SomaticWeights(Weights):
 
                         formed = 0
                         while not formed:
-                            post_idx = self.rng.choice(possible_post)
+                            post_idx = self.rng_w.choice(possible_post)
                             prob_in = np.power(self.q, connections_in[post_idx])
-                            accept = self.rng.binomial(1, prob_in)
+                            accept = self.rng_w.binomial(1, prob_in)
                             if accept:
                                 # Add connection to matrix
                                 weight_matrix[post_idx, idx_pre] = 1
