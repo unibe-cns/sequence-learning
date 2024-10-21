@@ -9,7 +9,6 @@ import numpy.typing as npt
 from .config import NetworkConfig, NeuronConfig, WeightConfig
 from .rate_buffer import Buffer
 
-
 # disable numba jit for debugging etc.
 numba.config.DISABLE_JIT = False
 
@@ -19,7 +18,11 @@ class Weights(ABC):
     Base class for weight matrices in neural networks.
     """
 
-    def __init__(self, weight_config: WeightConfig):
+    def __init__(self, weight_params: WeightConfig):
+        pass
+
+    @abstractmethod
+    def _create_delays(self, num_vis: int, num_lat: int):
         pass
 
     @abstractmethod
@@ -38,25 +41,25 @@ class DendriticWeights(Weights):
     This class extends the base Weights class and provides functionality to create
     dendritic weight matrices based on the given configuration.
 
-    :param weight_config: Configuration object containing weight parameters.
-    :type weight_config: WeightConfig
+    :param weight_params: Configuration object containing weight parameters.
+    :type weight_params: WeightConfig
     """
 
-    def __init__(self, weight_config: WeightConfig):
+    def __init__(self, weight_params: WeightConfig):
         """
         Initialize the DendriticWeights object.
 
-        :param weight_config: Configuration object containing weight parameters.
-        :type weight_config: WeightConfig
+        :param weight_params: Configuration object containing weight parameters.
+        :type weight_params: WeightConfig
         """
-        super().__init__(weight_config)
-        self.W_vis_vis = weight_config.W_vis_vis
-        self.W_vis_lat = weight_config.W_vis_lat
-        self.W_lat_vis = weight_config.W_lat_vis
-        self.W_lat_lat = weight_config.W_lat_lat
-        self.rng = np.random.default_rng(seed=weight_config.den_seed)
+        super().__init__(weight_params)
+        self.W_vis_vis = weight_params.W_vis_vis
+        self.W_vis_lat = weight_params.W_vis_lat
+        self.W_lat_vis = weight_params.W_lat_vis
+        self.W_lat_lat = weight_params.W_lat_lat
+        self.rng = np.random.default_rng(seed=weight_params.den_seed)
 
-    def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+    def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray, npt.NDArray]:
         """
         Create a dendritic weight matrix.
 
@@ -112,25 +115,25 @@ class SomaticWeights(Weights):
     This class extends the base Weights class and provides functionality to create
     somatic weight matrices based on probabilistic connection rules.
 
-    :param weight_config: Configuration object containing weight parameters.
-    :type weight_config: WeightConfig
+    :param weight_params: Configuration object containing weight parameters.
+    :type weight_params: WeightConfig
     """
 
-    def __init__(self, weight_config: WeightConfig):
+    def __init__(self, weight_params: WeightConfig):
         """
         Initialize the SomaticWeights object.
 
-        :param weight_config: Configuration object containing weight parameters.
-        :type weight_config: WeightConfig
+        :param weight_params: Configuration object containing weight parameters.
+        :type weight_params: WeightConfig
         """
-        super().__init__(weight_config)
-        self.p = weight_config.p
-        self.q = weight_config.q
-        self.p0 = weight_config.p0
+        super().__init__(weight_params)
+        self.p = weight_params.p
+        self.q = weight_params.q
+        self.p0 = weight_params.p0
         self.p_first = 1 - self.p0
-        self.rng = np.random.default_rng(seed=weight_config.som_seed)
+        self.rng = np.random.default_rng(seed=weight_params.som_seed)
 
-    def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+    def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray, npt.NDArray]:
         """
         Create a somatic weight matrix.
 
