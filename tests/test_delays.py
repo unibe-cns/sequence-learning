@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import numpy.testing as npt
 import pytest
 
 from elise.config import NetworkConfig, WeightConfig
@@ -28,7 +29,8 @@ def test_delay_basic(weight_class, default_weight_config, default_network_config
     w = weight_class(default_weight_config)
     _, delays = w(default_network_config.num_vis, default_network_config.num_lat)
     assert len(delays) == 63  # 50 + 13 = 63
-    assert np.all((delays >= 5) & (delays <= 15))
+    npt.assert_array_less(4, delays)
+    npt.assert_array_less(delays, 16)
     assert np.all(np.equal(np.mod(delays, 1), 0))
 
 
@@ -38,4 +40,4 @@ def test_delay_consistency(weight_class, default_weight_config, default_network_
     w2 = weight_class(default_weight_config)
     _, delays1 = w1(default_network_config.num_vis, default_network_config.num_lat)
     _, delays2 = w2(default_network_config.num_vis, default_network_config.num_lat)
-    np.testing.assert_allclose(delays1, delays2)
+    npt.assert_allclose(delays1, delays2)
