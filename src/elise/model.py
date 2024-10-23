@@ -21,49 +21,9 @@ class Weights(ABC):
     def __init__(self, weight_params: WeightConfig):
         pass
 
-    @abstractmethod
-    def _create_delays(self, num_vis: int, num_lat: int):
-        pass
-
-    @abstractmethod
-    def _create_weight_matrix(self, num_vis: int, num_lat: int):
-        pass
-
-    @abstractmethod
-    def __call__(self, num_vis: int, num_lat: int):
-        pass
-
-
-class DendriticWeights(Weights):
-    """
-    Class for creating dendritic weight matrices.
-
-    This class extends the base Weights class and provides functionality to create
-    dendritic weight matrices based on the given configuration.
-
-    :param weight_params: Configuration object containing weight parameters.
-    :type weight_params: WeightConfig
-    """
-
-    def __init__(self, weight_params: WeightConfig):
-        """
-        Initialize the DendriticWeights object.
-
-        :param weight_params: Configuration object containing weight parameters.
-        :type weight_params: WeightConfig
-        """
-        super().__init__(weight_params)
-        self.W_vis_vis = weight_params.W_vis_vis
-        self.W_vis_lat = weight_params.W_vis_lat
-        self.W_lat_vis = weight_params.W_lat_vis
-        self.W_lat_lat = weight_params.W_lat_lat
-        self.d_den = weight_params.d_den
-        self.rng_w = np.random.default_rng(seed=weight_params.w_den_seed)
-        self.rng_d = np.random.default_rng(seed=weight_params.d_den_seed)
-
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray, npt.NDArray]:
         """
-        Create a dendritic weight matrix.
+        Create weight matrix.
 
         :param num_vis: Number of visible neurons.
         :type num_vis: int
@@ -88,11 +48,44 @@ class DendriticWeights(Weights):
         """
 
         num_total = num_vis + num_lat
-        d_min = self.d_den[0]
-        d_max = self.d_den[1]
+        d_min = self.delays[0]
+        d_max = self.delays[1]
         delays = self.rng_d.integers(d_min, d_max, num_total)
 
         return delays
+
+    @abstractmethod
+    def _create_weight_matrix(self, num_vis: int, num_lat: int):
+        pass
+
+
+class DendriticWeights(Weights):
+    """
+    Class for creating dendritic weight matrices.
+
+    This class extends the base Weights class and provides functionality to create
+    dendritic weight matrices based on the given configuration.
+
+    :param weight_params: Configuration object containing weight parameters.
+    :type weight_params: WeightConfig
+    """
+
+    def __init__(self, weight_params: WeightConfig):
+        """
+        Initialize the DendriticWeights object.
+
+        :param weight_params: Configuration object containing weight parameters.
+        :type weight_params: WeightConfig
+        """
+        super().__init__(weight_params)
+        self.delays = weight_params.d_den
+        self.W_vis_vis = weight_params.W_vis_vis
+        self.W_vis_lat = weight_params.W_vis_lat
+        self.W_lat_vis = weight_params.W_lat_vis
+        self.W_lat_lat = weight_params.W_lat_lat
+        self.d_den = weight_params.d_den
+        self.rng_w = np.random.default_rng(seed=weight_params.w_den_seed)
+        self.rng_d = np.random.default_rng(seed=weight_params.d_den_seed)
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
@@ -148,46 +141,13 @@ class SomaticWeights(Weights):
         :type weight_params: WeightConfig
         """
         super().__init__(weight_params)
-        self.d_som = weight_params.d_som
+        self.delays = weight_params.d_som
         self.p = weight_params.p
         self.q = weight_params.q
         self.p0 = weight_params.p0
         self.p_first = 1 - self.p0
         self.rng_w = np.random.default_rng(seed=weight_params.w_som_seed)
         self.rng_d = np.random.default_rng(seed=weight_params.d_som_seed)
-
-    def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray, npt.NDArray]:
-        """
-        Create a somatic weight matrix.
-
-        :param num_vis: Number of visible neurons.
-        :type num_vis: int
-        :param num_lat: Number of lateral neurons.
-        :type num_lat: int
-        :return: A tuple containing the created weight matrix and associated delays.
-        :rtype: Tuple[npt.NDArray, npt.NDArray]
-        """
-        delays = self._create_delays(num_vis, num_lat)
-        weight_matrix = self._create_weight_matrix(num_vis, num_lat)
-        return weight_matrix, delays
-
-    def _create_delays(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
-        "Create the delays associated with the weight matrix"
-        """
-        :param num_vis: Number of visible neurons.
-        :type num_vis: int
-        :param num_lat: Number of lateral neurons.
-        :type num_lat: int
-        :return: A tuple containing the created delays.
-        :rtype: Tuple[npt.NDArray]
-        """
-
-        num_total = num_vis + num_lat
-        d_min = self.d_som[0]
-        d_max = self.d_som[1]
-        delays = self.rng_d.integers(d_min, d_max, num_total)
-
-        return delays
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
