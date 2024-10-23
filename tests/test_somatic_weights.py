@@ -1,27 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
-import pytest
 
-from elise.config import NetworkConfig, WeightConfig
 from elise.model import SomaticWeights
-
-
-@pytest.fixture
-def default_weight_config():
-    return WeightConfig(
-        w_som_seed=42,
-        p=0.5,
-        q=0.3,
-        p0=0.1,
-    )
-
-
-@pytest.fixture
-def default_network_config():
-    return NetworkConfig(
-        num_lat=50,
-        num_vis=13,
-    )
 
 
 def test_create_weight_matrix_basic(default_weight_config, default_network_config):

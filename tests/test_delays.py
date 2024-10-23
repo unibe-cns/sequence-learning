@@ -4,24 +4,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from elise.config import NetworkConfig, WeightConfig
 from elise.model import DendriticWeights, SomaticWeights
-
-
-@pytest.fixture
-def default_weight_config():
-    return WeightConfig(
-        w_den_seed=42,
-        d_den=[5, 15],
-    )
-
-
-@pytest.fixture
-def default_network_config():
-    return NetworkConfig(
-        num_lat=50,
-        num_vis=13,
-    )
 
 
 @pytest.mark.parametrize("weight_class", [DendriticWeights, SomaticWeights])
