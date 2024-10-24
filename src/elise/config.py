@@ -13,8 +13,10 @@ class NetworkConfig:
 
 @dataclass
 class WeightConfig:
-    som_seed: int = 42
-    den_seed: int = 42
+    w_som_seed: int = 42
+    w_den_seed: int = 99
+    d_som_seed: int = 42
+    d_den_seed: int = 99
     p: float = 0.5
     q: float = 0.3
     p0: float = 0.1
@@ -23,6 +25,8 @@ class WeightConfig:
     W_vis_lat: tuple = (0.0, 0.5)
     W_lat_lat: tuple = (0.0, 0.5)
     W_lat_vis: tuple = (0.0, 0.5)
+    d_den: Tuple[int, int] = (5, 15)
+    d_som: Tuple[int, int] = (5, 15)
 
 
 @dataclass
@@ -47,8 +51,6 @@ class NeuronConfig:
     g_den: float = 2.0
     g_exc: float = 0.3
     g_inh: float = 6.0
-    d_den: Tuple[int, int] = (5, 15)
-    d_som: Tuple[int, int] = (5, 15)
     a: float = 0.3
     b: float = -58.0
     d_int: int = 25

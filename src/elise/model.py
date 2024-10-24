@@ -9,7 +9,6 @@ import numpy.typing as npt
 from .config import NetworkConfig, NeuronConfig, WeightConfig
 from .rate_buffer import Buffer
 
-
 # disable numba jit for debugging etc.
 numba.config.DISABLE_JIT = False
 
@@ -19,15 +18,45 @@ class Weights(ABC):
     Base class for weight matrices in neural networks.
     """
 
-    def __init__(self, weight_config: WeightConfig):
+    @abstractmethod
+    def __init__(self, weight_params: WeightConfig):
         pass
+
+    def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray, npt.NDArray]:
+        """
+        Create weight matrix.
+
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: A tuple containing the created weight matrix and associated delays.
+        :rtype: Tuple[npt.NDArray]
+        """
+        weight_matrix = self._create_weight_matrix(num_vis, num_lat)
+        delays = self._create_delays(num_vis, num_lat)
+        return weight_matrix, delays
+
+    def _create_delays(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
+        "Create the delays associated with the weight matrix"
+        """
+        :param num_vis: Number of visible neurons.
+        :type num_vis: int
+        :param num_lat: Number of lateral neurons.
+        :type num_lat: int
+        :return: A tuple containing the created delays.
+        :rtype: Tuple[npt.NDArray]
+        """
+
+        num_total = num_vis + num_lat
+        d_min = self.delays[0]
+        d_max = self.delays[1]
+        delays = self.rng_d.integers(d_min, d_max, num_total)
+
+        return delays
 
     @abstractmethod
     def _create_weight_matrix(self, num_vis: int, num_lat: int):
-        pass
-
-    @abstractmethod
-    def __call__(self, num_vis: int, num_lat: int):
         pass
 
 
@@ -38,37 +67,26 @@ class DendriticWeights(Weights):
     This class extends the base Weights class and provides functionality to create
     dendritic weight matrices based on the given configuration.
 
-    :param weight_config: Configuration object containing weight parameters.
-    :type weight_config: WeightConfig
+    :param weight_params: Configuration object containing weight parameters.
+    :type weight_params: WeightConfig
     """
 
-    def __init__(self, weight_config: WeightConfig):
+    def __init__(self, weight_params: WeightConfig):
         """
         Initialize the DendriticWeights object.
 
-        :param weight_config: Configuration object containing weight parameters.
-        :type weight_config: WeightConfig
+        :param weight_params: Configuration object containing weight parameters.
+        :type weight_params: WeightConfig
         """
-        super().__init__(weight_config)
-        self.W_vis_vis = weight_config.W_vis_vis
-        self.W_vis_lat = weight_config.W_vis_lat
-        self.W_lat_vis = weight_config.W_lat_vis
-        self.W_lat_lat = weight_config.W_lat_lat
-        self.rng = np.random.default_rng(seed=weight_config.den_seed)
-
-    def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
-        """
-        Create a dendritic weight matrix.
-
-        :param num_vis: Number of visible neurons.
-        :type num_vis: int
-        :param num_lat: Number of lateral neurons.
-        :type num_lat: int
-        :return: A tuple containing the created weight matrix.
-        :rtype: Tuple[npt.NDArray]
-        """
-        weight_matrix = self._create_weight_matrix(num_vis, num_lat)
-        return weight_matrix
+        super().__init__(weight_params)
+        self.delays = weight_params.d_den
+        self.W_vis_vis = weight_params.W_vis_vis
+        self.W_vis_lat = weight_params.W_vis_lat
+        self.W_lat_vis = weight_params.W_lat_vis
+        self.W_lat_lat = weight_params.W_lat_lat
+        self.d_den = weight_params.d_den
+        self.rng_w = np.random.default_rng(seed=weight_params.w_den_seed)
+        self.rng_d = np.random.default_rng(seed=weight_params.d_den_seed)
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
@@ -86,16 +104,16 @@ class DendriticWeights(Weights):
         """
         # Initialize weight matrix
         weights = np.zeros((num_vis + num_lat, num_vis + num_lat))
-        weights[num_vis:, num_vis:] = self.rng.uniform(
+        weights[num_vis:, num_vis:] = self.rng_w.uniform(
             self.W_lat_lat[0], self.W_lat_lat[1], (num_lat, num_lat)
         )  # Lat to Lat
-        weights[num_vis:, :num_vis] = self.rng.uniform(
+        weights[num_vis:, :num_vis] = self.rng_w.uniform(
             self.W_lat_vis[0], self.W_lat_vis[1], (num_lat, num_vis)
         )  # Lat to Vis
-        weights[:num_vis, num_vis:] = self.rng.uniform(
+        weights[:num_vis, num_vis:] = self.rng_w.uniform(
             self.W_vis_lat[0], self.W_vis_lat[1], (num_vis, num_lat)
         )  # Vis to Lat
-        weights[:num_vis, :num_vis:] = self.rng.uniform(
+        weights[:num_vis, :num_vis:] = self.rng_w.uniform(
             self.W_vis_vis[0], self.W_vis_vis[1], (num_vis, num_vis)
         )  # Vis to Vis
 
@@ -112,37 +130,25 @@ class SomaticWeights(Weights):
     This class extends the base Weights class and provides functionality to create
     somatic weight matrices based on probabilistic connection rules.
 
-    :param weight_config: Configuration object containing weight parameters.
-    :type weight_config: WeightConfig
+    :param weight_params: Configuration object containing weight parameters.
+    :type weight_params: WeightConfig
     """
 
-    def __init__(self, weight_config: WeightConfig):
+    def __init__(self, weight_params: WeightConfig):
         """
         Initialize the SomaticWeights object.
 
-        :param weight_config: Configuration object containing weight parameters.
-        :type weight_config: WeightConfig
+        :param weight_params: Configuration object containing weight parameters.
+        :type weight_params: WeightConfig
         """
-        super().__init__(weight_config)
-        self.p = weight_config.p
-        self.q = weight_config.q
-        self.p0 = weight_config.p0
+        super().__init__(weight_params)
+        self.delays = weight_params.d_som
+        self.p = weight_params.p
+        self.q = weight_params.q
+        self.p0 = weight_params.p0
         self.p_first = 1 - self.p0
-        self.rng = np.random.default_rng(seed=weight_config.som_seed)
-
-    def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
-        """
-        Create a somatic weight matrix.
-
-        :param num_vis: Number of visible neurons.
-        :type num_vis: int
-        :param num_lat: Number of lateral neurons.
-        :type num_lat: int
-        :return: A tuple containing the created weight matrix.
-        :rtype: Tuple[npt.NDArray]
-        """
-        weight_matrix = self._create_weight_matrix(num_vis, num_lat)
-        return weight_matrix
+        self.rng_w = np.random.default_rng(seed=weight_params.w_som_seed)
+        self.rng_d = np.random.default_rng(seed=weight_params.d_som_seed)
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
@@ -184,7 +190,7 @@ class SomaticWeights(Weights):
                         prob_out = np.power(self.p, connections_out[idx_pre])
 
                     # Test for formation
-                    formation = self.rng.binomial(1, prob_out)
+                    formation = self.rng_w.binomial(1, prob_out)
                     if not formation:
                         # Remove neuron pre from list of unspent neurons
                         neurons_unspent = neurons_unspent[neurons_unspent != idx_pre]
@@ -197,9 +203,9 @@ class SomaticWeights(Weights):
 
                         formed = 0
                         while not formed:
-                            post_idx = self.rng.choice(possible_post)
+                            post_idx = self.rng_w.choice(possible_post)
                             prob_in = np.power(self.q, connections_in[post_idx])
-                            accept = self.rng.binomial(1, prob_in)
+                            accept = self.rng_w.binomial(1, prob_in)
                             if accept:
                                 # Add connection to matrix
                                 weight_matrix[post_idx, idx_pre] = 1
@@ -267,16 +273,24 @@ class Network:
         self.num_lat = network_params.num_lat
         self.num_vis = network_params.num_vis
         self.num_all = self.num_lat + self.num_vis
-        self.dendritic_weights = dendritic_weights(
+        self.dendritic_weights, self.delays_den = dendritic_weights(
             weight_params, self.num_lat, self.num_vis
         )
-        self.somatic_weights = somatic_weights(
+        self.somatic_weights, self.delays_som = somatic_weights(
             weight_params, self.num_vis, self.num_lat
         )
         self.neurons = neurons(neuron_params, self.num_all, rate_buffer)
 
     def simulation_step(self, dt):
-        # Implement simulation step logic here
+        # Compute r_den
+        # Compute r_exc
+        # Compute r_inh
+
+        # Run differential equation
+        # Update variables u, v, w, r_bar
+        # Compute new r
+        # Update buffer
+
         pass
 
     def update(self):
