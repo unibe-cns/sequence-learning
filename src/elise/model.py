@@ -149,6 +149,7 @@ class SomaticWeights(Weights):
         self.p_first = 1 - self.p0
         self.rng_w = np.random.default_rng(seed=weight_params.w_som_seed)
         self.rng_d = np.random.default_rng(seed=weight_params.d_som_seed)
+        self.inh_delay = weight_params.d_int
 
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
@@ -229,9 +230,7 @@ class SomaticWeights(Weights):
 
 
 class Neurons:
-    def __init__(
-        self, neuron_params: NeuronConfig, num_neurons: int, rate_buffer: Buffer
-    ):
+    def __init__(self, neuron_params: NeuronConfig, num_neurons: int):
         # Parameters
         self.C_v = neuron_params.C_v
         self.C_u = neuron_params.C_u
@@ -244,19 +243,16 @@ class Neurons:
         self.g_inh = neuron_params.g_inh
         self.a = neuron_params.a
         self.b = neuron_params.b
-        self.d_den = neuron_params.d_den
-        self.d_som = neuron_params.d_som
-        self.d_int = neuron_params.d_int
         self.lam = neuron_params.lam
 
         # Dynamical variables
+        self.r_rest = eq_phi(self.E_l, self.a, self.b)
         self.v = np.ones(num_neurons) * self.E_l
         self.u = np.ones(num_neurons) * self.E_l
-        self.r_bar = np.ones(num_neurons) * self.phi(self.E_l)
-        self.r = np.ones(num_neurons) * self.phi(self.E_l)
+        self.r_bar = np.ones(num_neurons) * self.r_rest
+        self.r = np.ones(num_neurons) * self.r_rest
         self.I_den = np.zeros(num_neurons)
         self.I_som = np.zeros(num_neurons)
-        self.rate_buffer = rate_buffer(num_neurons)
 
 
 class Network:
@@ -273,16 +269,28 @@ class Network:
         self.num_lat = network_params.num_lat
         self.num_vis = network_params.num_vis
         self.num_all = self.num_lat + self.num_vis
-        self.dendritic_weights, self.delays_den = dendritic_weights(
-            weight_params, self.num_lat, self.num_vis
+
+        self.dendritic_weights, self.dendritic_delays = dendritic_weights(
+            self.num_lat, self.num_vis
         )
-        self.somatic_weights, self.delays_som = somatic_weights(
-            weight_params, self.num_vis, self.num_lat
+        self.somatic_weights, self.somatic_delays = somatic_weights(
+            self.num_vis, self.num_lat
         )
-        self.neurons = neurons(neuron_params, self.num_all, rate_buffer)
+        self.interneuron_delays = self.somatic_delays + weight_params.d_int
+        self.neurons = neurons(neuron_params, self.num_all)
+
+        # Setup Buffer
+        buffer_depth = max(max(self.dendritic_delays), max(self.interneuron_delays))
+        val = self.neurons.r_rest
+        self.rate_buffer = rate_buffer(self.num_all, buffer_depth, val)
 
     def simulation_step(self, dt):
         # Compute r_den
+        r_den = self.rate_buffer.get(self.dendritic_delays)
+        r_exc = self.rate_buffer.get(self.somatic_delays)
+        r_inh = self.rate_buffer.get(self.interneuron_delays)
+
+        breakpoint()
         # Compute r_exc
         # Compute r_inh
 
