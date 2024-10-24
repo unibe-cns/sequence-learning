@@ -30,4 +30,4 @@ jobs:
         pip install -r requirements.txt
         pip install -e .
     - name: Run pytest
-      run: pytest --continue-on-collection-errors
+      run: pytest --cov=elise --continue-on-collection-errors
