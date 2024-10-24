@@ -82,14 +82,14 @@ def sample_r_bar(sample_r):
 @pytest.fixture
 def sample_g_exc(sample_r, std_nrn):
     phi_el = eq_phi(std_nrn.E_l, std_nrn.a, std_nrn.b)
-    g_exc = eq_syn_cond(sample_r, std_nrn.g_exc, phi_el)
+    g_exc = eq_syn_cond(sample_r, std_nrn.g_exc_0, phi_el)
     return g_exc
 
 
 @pytest.fixture
 def sample_g_inh(sample_r, std_nrn):
     phi_el = eq_phi(std_nrn.E_l, std_nrn.a, std_nrn.b)
-    g_inh = eq_syn_cond(sample_r * 0.95, std_nrn.g_inh, phi_el)
+    g_inh = eq_syn_cond(sample_r * 0.95, std_nrn.g_inh_0, phi_el)
     return g_inh
 
 
@@ -184,8 +184,8 @@ def sample_derivatives(
 
     phi_el = eq_phi(std_nrn.E_l, std_nrn.a, std_nrn.b)
 
-    g_exc = eq_syn_cond(sample_r_delay_exc, std_nrn.g_exc, phi_el)
-    g_inh = eq_syn_cond(sample_r_delay_inh, std_nrn.g_inh, phi_el)
+    g_exc = eq_syn_cond(sample_r_delay_exc, std_nrn.g_exc_0, phi_el)
+    g_inh = eq_syn_cond(sample_r_delay_inh, std_nrn.g_inh_0, phi_el)
 
     i_som = eq_i_som(sample_W_som, g_exc, g_inh, sample_u, std_nrn.E_exc, std_nrn.E_inh)
     g_exc_inp = eq_cond_exc_inp(
@@ -250,13 +250,13 @@ def test_syn_cond(sample_r, std_nrn, sample_g_inh, sample_g_exc):
     phi_el = eq_phi(std_nrn.E_l, std_nrn.a, std_nrn.b)
 
     # test for excitatory synapses
-    expected = std_nrn.g_exc * sample_r
-    expected[sample_r <= phi_el] = phi_el * std_nrn.g_exc
+    expected = std_nrn.g_exc_0 * sample_r
+    expected[sample_r <= phi_el] = phi_el * std_nrn.g_exc_0
     assert_allclose(sample_g_exc, expected)
 
     # test for inhibitory synapses
-    expected = std_nrn.g_inh * sample_r * 0.95
-    expected[sample_r * 0.95 <= phi_el] = phi_el * std_nrn.g_inh
+    expected = std_nrn.g_inh_0 * sample_r * 0.95
+    expected[sample_r * 0.95 <= phi_el] = phi_el * std_nrn.g_inh_0
     assert_allclose(sample_g_inh, expected)
 
 
@@ -413,8 +413,8 @@ def test_total_diff_eq(
         C_v=std_nrn.C_v,
         g_l=std_nrn.g_l,
         g_den=std_nrn.g_den,
-        g_exc_0=std_nrn.g_exc,
-        g_inh_0=std_nrn.g_inh,
+        g_exc_0=std_nrn.g_exc_0,
+        g_inh_0=std_nrn.g_inh_0,
         E_l=std_nrn.E_l,
         E_exc=std_nrn.E_exc,
         E_inh=std_nrn.E_inh,
