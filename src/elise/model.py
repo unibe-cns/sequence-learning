@@ -239,20 +239,37 @@ class Neurons:
         self.E_inh = neuron_params.E_inh
         self.g_l = neuron_params.g_l
         self.g_den = neuron_params.g_den
-        self.g_exc = neuron_params.g_exc
-        self.g_inh = neuron_params.g_inh
+        self.g_exc_0 = neuron_params.g_exc_0
+        self.g_inh_0 = neuron_params.g_inh_0
         self.a = neuron_params.a
         self.b = neuron_params.b
         self.lam = neuron_params.lam
 
         # Dynamical variables
-        self.r_rest = eq_phi(self.E_l, self.a, self.b)
         self.v = np.ones(num_neurons) * self.E_l
         self.u = np.ones(num_neurons) * self.E_l
+        self.r_rest = eq_phi(self.E_l, self.a, self.b)
         self.r_bar = np.ones(num_neurons) * self.r_rest
         self.r = np.ones(num_neurons) * self.r_rest
-        self.I_den = np.zeros(num_neurons)
-        self.I_som = np.zeros(num_neurons)
+
+    def as_dict(self):
+        return {
+            "C_v": self.C_v,
+            "C_u": self.C_u,
+            "E_l": self.E_l,
+            "E_exc": self.E_exc,
+            "E_inh": self.E_inh,
+            "g_l": self.g_l,
+            "g_den": self.g_den,
+            "g_exc_0": self.g_exc_0,
+            "g_inh_0": self.g_inh_0,
+            "a": self.a,
+            "b": self.b,
+            "lam": self.lam,
+            "u": self.u,
+            "v": self.v,
+            "r_bar": self.r_bar,
+        }
 
 
 class Network:
