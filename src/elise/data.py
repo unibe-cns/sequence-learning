@@ -77,10 +77,13 @@ class Dataloader:
 
         # apply pre-transforms directly once
         for transform in pre_transforms:
-            self.pat = transform(self.pat)
+            self.pat.pattern = transform(self.pat.pattern)
+            if self.pat.pattern.shape != self.pat.shape:
+                raise ValueError(
+                    "The pre_transform {transform} may not change the shape of the pattern!"  # noqa
+                )
 
     def _time_to_idx(self, t: float) -> int:
-        breakpoint()
         return int((t % self.dur) / self.dt)
 
     def _apply_online_transforms(self, pat_1d):
@@ -96,10 +99,10 @@ class Dataloader:
             pat = dataloader(t)
             my_simulation.step(t, u_inp=pat,...)
         """
-        idx = self._time_to_idx(t)
+        idx = self._time_to_idx(t + offset)
         pat_t = self.pat[idx]
 
-        pat_t = self._apply_online_transforms(pat_t + offset)
+        pat_t = self._apply_online_transforms(pat_t)
 
         return pat_t
 
