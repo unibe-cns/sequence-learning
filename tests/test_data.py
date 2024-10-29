@@ -186,3 +186,13 @@ class TestDataloader:
             _ = dataloader(t)
         expected = transform_mult(transform_plus(base_sequence[idx]))
         assert_allclose(dataloader(T), expected)
+
+    def test_iter(self, dataloader_factory, base_sequence):
+        dataloader = dataloader_factory()
+        idx = 0
+        t_exp = 0.0
+        for t, pat in dataloader.iter(0.0, 1.2, 0.1):
+            assert t == t_exp
+            assert_allclose(pat, base_sequence[idx % len(base_sequence)])
+            t_exp += 0.1
+            idx += 1

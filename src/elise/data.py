@@ -113,4 +113,7 @@ class Dataloader:
         for t, pat in dataloader.iter(t_start, t_stop, dt):
             my_simulation.step(t, u_inp=pat,...)
         """
-        return self.Iterator(...)
+        t = t_start
+        while t < t_stop:
+            yield t, self.__call__(t, offset=dt * 0.01)
+            t += dt
