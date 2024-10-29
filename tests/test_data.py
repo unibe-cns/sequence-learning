@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from elise.data import Dataloader, Pattern
+from elise.data import Dataloader, OneHotPattern, Pattern
 
 DT = 0.1
 
@@ -60,6 +60,25 @@ class TestPattern:
     def test_getitem(self, pattern_factory, base_sequence, idx):
         pat = pattern_factory()
         assert_allclose(pat[idx], base_sequence[idx])
+
+
+################################
+# Test the OneHotPattern class #
+################################
+
+
+@pytest.fixture()
+def onehot_sequence():
+    return np.array([1, 1, 0, 0, 2, 2])
+
+
+@pytest.fixture()
+def onehot_pattern(onehot_sequence):
+    return OneHotPattern(onehot_sequence, dt=DT, width=3)
+
+
+def test_onehot(onehot_pattern, base_sequence):
+    assert_allclose(onehot_pattern[:, :], base_sequence)
 
 
 ###################

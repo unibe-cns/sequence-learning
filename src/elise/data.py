@@ -6,7 +6,7 @@
 # from abc import ABC, abstractmethod
 from typing import Any, Callable, List
 
-# import numpy as np
+import numpy as np
 import numpy.typing as npt
 
 
@@ -20,10 +20,13 @@ class Pattern:
     def __init__(self, pattern: npt.NDArray, dt: float) -> None:
         """Docstring."""
         self._pattern = pattern
-        self.pattern = self._pattern  # do nothing here!
+        self.pattern = self._convert(pattern)
         self.dt = dt
         self.dur = self.dt * self.__len__()
         self.shape = self.pattern.shape
+
+    def _convert(self, pattern: npt.NDArray) -> npt.NDArray:
+        return pattern
 
     def __repr__(self) -> str:
         """Repr method."""
@@ -49,10 +52,18 @@ class Pattern2:
     pass
 
 
-class SequentialPattern(Pattern):
+class OneHotPattern(Pattern):
     """Turn a sequential pattern into a propper pattern."""
 
-    pass
+    def __init__(self, pattern: npt.NDArray, dt: float, width: int) -> None:
+        self._width = width
+        super().__init__(pattern, dt)
+
+    def _convert(self, pattern):
+        res = np.zeros((len(pattern), self._width))
+        for i, j in enumerate(pattern):
+            res[i, j] = 1.0
+        return res
 
 
 class Dataloader:
