@@ -11,14 +11,33 @@ import numpy.typing as npt
 
 
 class Pattern:
-    """Base Class for all pattern types.
+    """
+    Base Class for all pattern types.
 
-    More specific pattern should inherit from this.
+    More specific patterns should inherit from this.
     Defines the interface for all other Pattern classes.
+
+    :ivar _pattern: The original input pattern array
+    :vartype _pattern: npt.NDArray
+    :ivar pattern: The converted pattern array
+    :vartype pattern: npt.NDArray
+    :ivar dt: Time step
+    :vartype dt: float
+    :ivar dur: Total duration of the pattern
+    :vartype dur: float
+    :ivar shape: Shape of the pattern array
+    :vartype shape: tuple
     """
 
     def __init__(self, pattern: npt.NDArray, dt: float) -> None:
-        """Docstring."""
+        """
+        Initialize the Pattern object.
+
+        :param pattern: The input pattern array
+        :type pattern: npt.NDArray
+        :param dt: Time step
+        :type dt: float
+        """
         self._pattern = pattern
         self.pattern = self._convert(pattern)
         self.dt = dt
@@ -26,18 +45,46 @@ class Pattern:
         self.shape = self.pattern.shape
 
     def _convert(self, pattern: npt.NDArray) -> npt.NDArray:
+        """
+        Convert the input pattern.
+
+        In this case, don't do anything.
+        Typically, oyu want to overwrite this.
+
+        :param pattern: The input pattern array
+        :type pattern: npt.NDArray
+        :return: The converted pattern
+        :rtype: npt.NDArray
+        """
         return pattern
 
     def __repr__(self) -> str:
-        """Repr method."""
+        """
+        Return a string representation of the Pattern object.
+
+        :return: String representation
+        :rtype: str
+        """
         return f"{self.__class__.__name__}(pattern={self._pattern}, dt={self.dt})"
 
     def __len__(self) -> int:
-        """Return the length of the pattern."""
+        """
+        Return the length of the pattern.
+
+        :return: Length of the pattern
+        :rtype: int
+        """
         return self.pattern.shape[0]
 
     def __getitem__(self, idx) -> Any:
-        """Get item."""
+        """
+        Get item at the specified index.
+
+        :param idx: Index
+        :type idx: int
+        :return: Item at the specified index
+        :rtype: Any
+        """
         return self.pattern[idx]
 
 
@@ -53,9 +100,26 @@ class Pattern2:
 
 
 class OneHotPattern(Pattern):
-    """Turn a sequential pattern into a propper pattern."""
+    """
+    Turn a sequential pattern into a one-hot encoded pattern.
+
+    This class extends the base Pattern class to create one-hot encoded patterns.
+
+    :ivar _width: The width of the one-hot encoded pattern
+    :vartype _width: int
+    """
 
     def __init__(self, pattern: npt.NDArray, dt: float, width: int) -> None:
+        """
+        Initialize the OneHotPattern object.
+
+        :param pattern: The input sequential pattern array
+        :type pattern: npt.NDArray
+        :param dt: Time step
+        :type dt: float
+        :param width: Width of the one-hot encoded pattern
+        :type width: int
+        """
         self._width = width
         super().__init__(pattern, dt)
 
@@ -67,10 +131,21 @@ class OneHotPattern(Pattern):
 
 
 class Dataloader:
-    """Dataloader.
+    """
+    Dataloader for pattern data.
 
-    maybe introduce pre- and online-transforms?
+    Has a call-method for passing the correct pattern at time t.
+    And an iter-method that acts as an iterator.
+    Handles pre-transforms and online-transforms for pattern data.
 
+    :ivar pat: The pattern object
+    :vartype pat: Pattern
+    :ivar dur: Duration of the pattern
+    :vartype dur: float
+    :ivar dt: Time step of the pattern
+    :vartype dt: float
+    :ivar online_transforms: List of online transforms to be applied
+    :vartype online_transforms: List[Callable]
     """
 
     def __init__(
@@ -79,7 +154,17 @@ class Dataloader:
         pre_transforms: List[Callable] = [],
         online_transforms: List[Callable] = [],
     ) -> None:
-        """Docstring."""
+        """
+        Initialize the Dataloader object.
+
+        :param pat: The pattern object
+        :type pat: Pattern
+        :param pre_transforms: List of pre-transforms to be applied once, defaults to []
+        :type pre_transforms: List[Callable], optional
+        :param online_transforms: List of online transforms to be applied on each call, defaults to []  # noqa
+        :type online_transforms: List[Callable], optional
+        :raises ValueError: If a pre-transform changes the shape of the pattern
+        """
         self.pat = pat
         self.dur = pat.dur
         self.dt = pat.dt
@@ -103,12 +188,20 @@ class Dataloader:
         return pat_1d
 
     def __call__(self, t: float, offset: float = 1e-6):
-        """When the dataloader is called, the correct pattern at time t is returned.
+        """
+        Return the correct pattern at time t.
 
-        example:
-        for t in np.arange(0, 100, 0.1):
-            pat = dataloader(t)
-            my_simulation.step(t, u_inp=pat,...)
+        :param t: Time
+        :type t: float
+        :param offset: Time offset, defaults to 1e-6
+        :type offset: float, optional
+        :return: Pattern at time t
+        :rtype: npt.NDArray
+
+        Example:
+            for t in np.arange(0, 100, 0.1):
+                pat = dataloader(t)
+                my_simulation.step(t, u_inp=pat,...)
         """
         idx = self._time_to_idx(t + offset)
         pat_t = self.pat[idx]
@@ -118,11 +211,21 @@ class Dataloader:
         return pat_t
 
     def iter(self, t_start, t_stop, dt):
-        """Use dataloader as an iterator/iterable.
+        """
+        Use dataloader as an iterator/iterable.
 
-        example:
-        for t, pat in dataloader.iter(t_start, t_stop, dt):
-            my_simulation.step(t, u_inp=pat,...)
+        :param t_start: Start time
+        :type t_start: float
+        :param t_stop: Stop time
+        :type t_stop: float
+        :param dt: Time step
+        :type dt: float
+        :yield: Tuple of time and pattern
+        :rtype: Tuple[float, npt.NDArray]
+
+        Example:
+            for t, pat in dataloader.iter(t_start, t_stop, dt):
+                my_simulation.step(t, u_inp=pat,...)
         """
         t = t_start
         while t < t_stop:
