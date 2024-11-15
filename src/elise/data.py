@@ -138,6 +138,12 @@ class OneHotPattern(BasePattern):
         :param width: Width of the one-hot encoded pattern
         :type width: int
         """
+        if len(pattern.shape) != 1:
+            raise ValueError("pattern must be one dimensional")
+        if np.max(pattern) > width - 1:
+            raise ValueError(
+                "width must be greater then or equal to the maximum value in pattern"
+            )
         self._width = width
         super().__init__(pattern, dt)
 
