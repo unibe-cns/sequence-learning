@@ -3,14 +3,14 @@
 # /usr/bin/env python3
 
 
-# from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any, Callable, List
 
 import numpy as np
 import numpy.typing as npt
 
 
-class Pattern:
+class BasePattern(ABC):
     """
     Base Class for all pattern types.
 
@@ -44,19 +44,20 @@ class Pattern:
         self.dur = self.dt * self.__len__()
         self.shape = self.pattern.shape
 
+    @abstractmethod
     def _convert(self, pattern: npt.NDArray) -> npt.NDArray:
         """
         Convert the input pattern.
 
-        In this case, don't do anything.
-        Typically, oyu want to overwrite this.
+        Basically one of the core functionalities of the Pattern-Classes.
+        Every Pattern class needs to implement this.
 
         :param pattern: The input pattern array
         :type pattern: npt.NDArray
         :return: The converted pattern
         :rtype: npt.NDArray
         """
-        return pattern
+        pass
 
     def __repr__(self) -> str:
         """
@@ -94,6 +95,17 @@ class Pattern:
         return self.pattern[idx]
 
 
+class Pattern(BasePattern):
+    """Simplest Pattern class.
+
+    No conversion happens.
+    """
+
+    def _convert(self, pattern: npt.NDArray):
+        """No conversion."""
+        return pattern
+
+
 class Pattern2:
     """TODO: rewrite Pattern with properties:
 
@@ -105,7 +117,7 @@ class Pattern2:
     pass
 
 
-class OneHotPattern(Pattern):
+class OneHotPattern(BasePattern):
     """
     Turn a sequential pattern into a one-hot encoded pattern.
 
