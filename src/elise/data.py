@@ -41,7 +41,7 @@ class BasePattern(ABC):
         self._pattern = pattern
         self.pattern = self._convert(pattern)
         self.dt = dt
-        self.dur = self.dt * self.__len__()
+        self.duration = self.dt * self.__len__()
         self.shape = self.pattern.shape
 
     @abstractmethod
@@ -174,46 +174,44 @@ class Dataloader:
 
     def __init__(
         self,
-        pat: Pattern,
+        pattern: Pattern,
         pre_transforms: List[Callable] = [],
         online_transforms: List[Callable] = [],
     ) -> None:
         """
         Initialize the Dataloader object.
 
-        :param pat: The pattern object
-        :type pat: Pattern
+        :param pattern: The pattern object
+        :type pattern: Pattern
         :param pre_transforms: List of pre-transforms to be applied once, defaults to []
         :type pre_transforms: List[Callable], optional
         :param online_transforms: List of online transforms to be applied on each call, defaults to []  # noqa
         :type online_transforms: List[Callable], optional
         :raises ValueError: If a pre-transform changes the shape of the pattern
         """
-        self.pat = pat
-        self.dur = pat.dur
-        self.dt = pat.dt
+        self.pattern = pattern
+        self.duration = self.pattern.duration
+        self.dt = self.pattern.dt
 
         self.online_transforms = online_transforms
 
         # apply pre-transforms directly once
         for transform in pre_transforms:
-            self.pat.pattern = transform(self.pat.pattern)
-            if self.pat.pattern.shape != self.pat.shape:
-                raise ValueError(
-                    "The pre_transform {transform} may not change the shape of the pattern!"  # noqa
-                )
+            self.pattern._transform(transform)
 
     def _time_to_idx(self, t: float) -> int:
-        return int((t % self.dur) / self.dt)
+        return int((t % self.duration) / self.dt)
 
-    def _apply_online_transforms(self, pat_1d):
+    def _apply_online_transforms(self, pattern_1d):
         for transform in self.online_transforms:
-            pat_1d = transform(pat_1d)
-        return pat_1d
+            pattern_1d = transform(pattern_1d)
+        return pattern_1d
 
     def __call__(self, t: float, offset: float = 1e-6):
         """
         Return the correct pattern at time t.
+
+        # TODO Explain offset better!
 
         :param t: Time
         :type t: float
@@ -224,15 +222,15 @@ class Dataloader:
 
         Example:
             for t in np.arange(0, 100, 0.1):
-                pat = dataloader(t)
-                my_simulation.step(t, u_inp=pat,...)
+                pattern = dataloader(t)
+                my_simulation.step(t, u_inp=pattern,...)
         """
         idx = self._time_to_idx(t + offset)
-        pat_t = self.pat[idx]
+        pattern_t = self.pattern[idx]
 
-        pat_t = self._apply_online_transforms(pat_t)
+        pattern_t = self._apply_online_transforms(pattern_t)
 
-        return pat_t
+        return pattern_t
 
     def iter(self, t_start, t_stop, dt):
         """
@@ -248,8 +246,8 @@ class Dataloader:
         :rtype: Tuple[float, npt.NDArray]
 
         Example:
-            for t, pat in dataloader.iter(t_start, t_stop, dt):
-                my_simulation.step(t, u_inp=pat,...)
+            for t, pattern in dataloader.iter(t_start, t_stop, dt):
+                my_simulation.step(t, u_inp=pattern,...)
         """
         t = t_start
         while t < t_stop:
