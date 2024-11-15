@@ -154,6 +154,7 @@ class SomaticWeights(Weights):
         self.rng_d = np.random.default_rng(seed=weight_params.d_som_seed)
         self.inh_delay = weight_params.d_int
 
+
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
         Create the somatic weight matrix based on probabilistic connection rules.
@@ -269,20 +270,26 @@ class Network:
         self.u = np.ones(self.num_all) * self.neuron_params.E_l
         self.r_bar = np.ones(self.num_all) * self.r_rest
         self.r = np.ones(self.num_all) * self.r_rest
+        self.r_den = np.ones(self.num_all) * self.r_rest
+        self.r_exc = np.ones(self.num_all) * self.r_rest
+        self.r_inh = np.ones(self.num_all) * self.r_rest
+
+
 
     def _compute_update(self, dt, u_inp):
+    def _compute_update(self, u_inp):
         # Compute delayed rates
-        r_den = self.rate_buffer.get(self.dendritic_delays)
-        r_exc = self.rate_buffer.get(self.somatic_delays)
-        r_inh = self.rate_buffer.get(self.interneuron_delays)
+        self.r_den = self.rate_buffer.get(self.dendritic_delays)
+        self.r_exc = self.rate_buffer.get(self.somatic_delays)
+        self.r_inh = self.rate_buffer.get(self.interneuron_delays)
 
         dudt, dvdt, dwdt, dr_bar_dt = total_diff_eq(
             **self.neuron_params.as_dict(),
             w_den=self.dendritic_weights,
             w_som=self.somatic_weights,
-            r_den=r_den,
-            r_exc=r_exc,
-            r_inh=r_inh,
+            self.r_den=r_den,
+            self.r_exc=r_exc,
+            self.r_inh=r_inh,
             u_inp=u_inp,
         )
 
