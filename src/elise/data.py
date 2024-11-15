@@ -4,7 +4,7 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -29,19 +29,44 @@ class BasePattern(ABC):
     :vartype shape: tuple
     """
 
-    def __init__(self, pattern: npt.NDArray, dt: float) -> None:
+    def __init__(
+        self,
+        pattern: npt.NDArray,
+        dt: Optional[float] = None,
+        duration: Optional[float] = None,
+    ) -> None:
         """
         Initialize the Pattern object.
 
-        :param pattern: The input pattern array
+        :param pattern: The input pattern array.
         :type pattern: npt.NDArray
-        :param dt: Time step
-        :type dt: float
+        :param dt: Time step for the pattern (mutually exclusive with 'duration').
+        :type dt: Optional[float]
+        :param duration: Total duration of the pattern (mutually exclusive with 'dt').
+        :type duration: Optional[float]
+        :raises ValueError: If neither or both 'dt' and 'duration' are provided.
+
+        Calculates either duration or time step based on provided arguments.
+
+        Attributes:
+            _pattern (npt.NDArray): Original input pattern array.
+            pattern (npt.NDArray): Converted pattern array.
+            dt (float): Time step if specified.
+            duration (float): Total duration if specified.
+            shape (tuple): Shape of the converted pattern array.
         """
         self._pattern = pattern
         self.pattern = self._convert(pattern)
-        self.dt = dt
-        self.duration = self.dt * self.__len__()
+        if (dt is None and duration is None) or (
+            dt is not None and duration is not None
+        ):
+            raise ValueError("Exactly one of 'dt' or 'duration' must be provided")
+        if type(dt) is float:
+            self.dt = dt
+            self.duration = self.dt * self.__len__()
+        if type(duration) is float:
+            self.duration = duration
+            self.dt = self.duration / self.__len__()
         self.shape = self.pattern.shape
 
     @abstractmethod
@@ -222,7 +247,9 @@ class Dataloader:
         """
         Return the correct pattern at time t.
 
-        # TODO Explain offset better!
+        The offset is a small value added to t to make sure that the pattern is
+        read "in the middle". This is to prevent that floating point glitches read
+        from the wrong pattern.
 
         :param t: Time
         :type t: float

@@ -32,12 +32,12 @@ def base_sequence():
 
 @pytest.fixture()
 def pattern_factory(base_sequence):
-    def factory(sequence=None, dt=None):
+    def factory(sequence=None, dt=None, duration=None):
         if sequence is None:
             sequence = base_sequence
-        if dt is None:
+        if dt is None and duration is None:
             dt = DT
-        pattern = Pattern(sequence, dt=DT)
+        pattern = Pattern(sequence, dt=dt, duration=duration)
         return pattern
 
     return factory
@@ -68,11 +68,17 @@ def transform_reshape():
 
 
 class TestPattern:
-    def test_init(self, pattern_factory, base_sequence):
-        pat = pattern_factory()
-        assert pat.duration == len(base_sequence) * DT
+    @pytest.mark.parametrize(("dt", "dur"), [(0.1, None), (None, 0.6)])
+    def test_init(self, pattern_factory, base_sequence, dt, dur):
+        pat = pattern_factory(dt=dt, duration=dur)
+        assert pat.dt == pytest.approx(DT)
+        assert pat.duration == pytest.approx(len(base_sequence) * DT)
         assert pat.shape == base_sequence.shape
         assert_allclose(base_sequence, pat.pattern)
+
+    def test_init_error(self, pattern_factory):
+        with pytest.raises(ValueError):
+            _ = pattern_factory(dt=0.3, duration=0.7)
 
     def test_len(self, pattern_factory, base_sequence):
         pat = pattern_factory()
