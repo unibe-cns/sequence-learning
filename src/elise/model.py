@@ -20,6 +20,8 @@ class Weights(ABC):
 
     @abstractmethod
     def __init__(self, weight_params: WeightConfig):
+        self.weight_matrix = None
+        self.delays = None
         pass
 
     def __call__(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray, npt.NDArray]:
@@ -33,9 +35,10 @@ class Weights(ABC):
         :return: A tuple containing the created weight matrix and associated delays.
         :rtype: Tuple[npt.NDArray]
         """
-        weight_matrix = self._create_weight_matrix(num_vis, num_lat)
-        delays = self._create_delays(num_vis, num_lat)
-        return weight_matrix, delays
+        self.weight_matrix = self._create_weight_matrix(num_vis, num_lat)
+        self.delays = self._create_delays(num_vis, num_lat)
+
+        return self.weight_matrix, self.delays
 
     def _create_delays(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         "Create the delays associated with the weight matrix"
@@ -228,6 +231,12 @@ class SomaticWeights(Weights):
 
         return weight_matrix
 
+    def create_interneuron_delays(self) -> npt.NDArray:
+        # Take self.delays and add the interneuron delay to all entries
+        self.inh_delay = self.delays + self.inh_delay
+
+        return self.inh_delay
+
 
 class Network:
     def __init__(
@@ -249,16 +258,11 @@ class Network:
         self.somatic_weights, self.somatic_delays = somatic_weights(
             self.num_vis, self.num_lat
         )
-
         self.interneuron_delays = somatic_weights.create_interneuron_delays()
 
         self.r_rest = eq_phi(
             self.neuron_params.E_l, self.neuron_params.a, self.neuron_params.b
         )
-
-        # Setup Buffer
-        buffer_depth = self._compute_max_delay()
-        self.rate_buffer = rate_buffer(self.num_all, buffer_depth, self.r_rest)
 
         # Dynamical variables
         self.v = np.ones(self.num_all) * self.neuron_params.E_l
@@ -284,7 +288,13 @@ class Network:
 
         return dudt, dvdt, dwdt, dr_bar_dt
 
-    def _compute_max_delay(self):
+    def prepare_for_simulation(self, dt):
+        # Configure rate buffer for simulation
+        self.network.rate_buffer = Buffer(
+            self.network.num_all, self.network._compute_buffer_depth(dt)
+        )
+
+    def _compute_buffer_depth(self, dt):
         return max(
             max(self.dendritic_delays),
             max(self.somatic_delays),
