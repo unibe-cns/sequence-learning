@@ -67,6 +67,12 @@ class Pattern:
         """
         return f"{self.__class__.__name__}(pattern={self._pattern}, dt={self.dt})"
 
+    def __str__(self) -> str:
+        """
+        Return a string representation.
+        """
+        return "\n".join(["pattern=", str(self.pattern), f"dt={self.dt}"])
+
     def __len__(self) -> int:
         """
         Return the length of the pattern.
