@@ -59,6 +59,17 @@ class BasePattern(ABC):
         """
         pass
 
+    def _transform(self, transformation: Callable[[npt.NDArray], npt.NDArray]) -> None:
+        """Apply a transformation to the whole pattern.
+
+        At the moment, the transformation takes only a pattern, no other arguments.
+        """
+        self.pattern = transformation(self.pattern)
+        if self.shape != self.pattern.shape:
+            raise ValueError(
+                "The transformation {transform} may not change the shape of the pattern!"  # noqa
+            )
+
     def __repr__(self) -> str:
         """
         Return a string representation of the Pattern object.

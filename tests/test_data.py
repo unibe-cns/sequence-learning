@@ -43,10 +43,34 @@ def pattern_factory(base_sequence):
     return factory
 
 
+@pytest.fixture()
+def transform_plus():
+    def plus(x, a=2.0):
+        return x + a
+
+    return plus
+
+
+@pytest.fixture()
+def transform_mult():
+    def mult(x, m=2.0):
+        return x * m
+
+    return mult
+
+
+@pytest.fixture()
+def transform_reshape():
+    def reshape(x):
+        return np.expand_dims(x, -1)
+
+    return reshape
+
+
 class TestPattern:
     def test_init(self, pattern_factory, base_sequence):
         pat = pattern_factory()
-        assert pat.dur == len(base_sequence) * DT
+        assert pat.duration == len(base_sequence) * DT
         assert pat.shape == base_sequence.shape
         assert_allclose(base_sequence, pat.pattern)
 
@@ -60,6 +84,17 @@ class TestPattern:
     def test_getitem(self, pattern_factory, base_sequence, idx):
         pat = pattern_factory()
         assert_allclose(pat[idx], base_sequence[idx])
+
+    def test_transform(self, pattern_factory, base_sequence, transform_plus):
+        pat = pattern_factory()
+        pat._transform(transform_plus)
+        expected = transform_plus(base_sequence)
+        assert_allclose(pat.pattern, expected)
+
+    def test_pretransform_reshape_error(self, pattern_factory, transform_reshape):
+        pat = pattern_factory()
+        with pytest.raises(ValueError) as exc_info:  # noqa
+            pat._transform(transform_reshape)
 
 
 ################################
@@ -98,35 +133,11 @@ def dataloader_factory(pattern_factory):
     return factory
 
 
-@pytest.fixture()
-def transform_plus():
-    def plus(x, a=2.0):
-        return x + a
-
-    return plus
-
-
-@pytest.fixture()
-def transform_mult():
-    def mult(x, m=2.0):
-        return x * m
-
-    return mult
-
-
-@pytest.fixture()
-def transform_reshape():
-    def reshape(x):
-        return np.expand_dims(x, -1)
-
-    return reshape
-
-
 class TestDataloader:
     @pytest.mark.parametrize("transforms", [[], [transform_plus, transform_mult]])
     def test_init(self, dataloader_factory, base_sequence, transforms):
         dataloader = dataloader_factory(online_transforms=transforms)
-        assert_allclose(dataloader.pat[:, :], base_sequence)
+        assert_allclose(dataloader.pattern[:, :], base_sequence)
         assert dataloader.dt == pytest.approx(DT)
         assert dataloader.online_transforms == transforms
 
@@ -139,7 +150,7 @@ class TestDataloader:
     ):
         dataloader = dataloader_factory(pre_transforms=[transform_plus, transform_mult])
         expected = transform_mult(transform_plus(base_sequence))
-        assert_allclose(dataloader.pat, expected)
+        assert_allclose(dataloader.pattern, expected)
 
     @pytest.mark.parametrize(
         ("t", "idx"),
