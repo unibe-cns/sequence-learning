@@ -154,7 +154,6 @@ class SomaticWeights(Weights):
         self.rng_d = np.random.default_rng(seed=weight_params.d_som_seed)
         self.inh_delay = weight_params.d_int
 
-
     def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         """
         Create the somatic weight matrix based on probabilistic connection rules.
@@ -274,13 +273,11 @@ class Network:
         self.r_exc = np.ones(self.num_all) * self.r_rest
         self.r_inh = np.ones(self.num_all) * self.r_rest
 
-
     def _compute_buffer_depth(self, dt):
         max_buffer_ms = max(max(self.dendritic_delays), max(self.interneuron_delays))
         buffer_depth = int(max_buffer_ms / dt)
 
         return buffer_depth
-
 
     def prepare_for_simulation(self, dt):
         # Configure rate buffer for simulation
@@ -288,7 +285,6 @@ class Network:
             self.num_all, self._compute_buffer_depth(dt), self.r_rest
         )
         self.dt = dt
-
 
     def _compute_update(self, u_inp):
         # Compute delayed rates
@@ -308,22 +304,35 @@ class Network:
 
         return dudt, dvdt, dwdt, dr_bar_dt
 
+    def _update_dyanmic_variables(self, dudt, dvdt, dr_bar_dt):
+        self.u += dudt * self.dt
+        self.v += dvdt * self.dt
+        self.r_bar += dr_bar_dt * self.dt
 
-    def _update_dyanmic_variables(self, dudt, dvdt, dwdt, dr_bar_dt, dt):
-        self.u += dudt * dt
-        self.v += dvdt * dt
-        self.r_bar += dr_bar_dt * dt
-        self.dendritic_weights += dwdt * dt
+    def _update_weights(self, dwdt, optimizer_vis, optimizer_lat):
+        # Update lat
+        w_lat = self.dendritic_weights[self.num_vis :, :]
+        w_vis = self.dendritic_weights[: self.num_vis, :]
+        dwdt_lat = dwdt[self.num_vis :, :]
+        dwdt_vis = dwdt[: self.num_vis, :]
 
-    def _update_rates_and_buffer(self, dt):
-        new_r = eq_phi(self.u, self.a, self.b)
+        # Apply optimizers
+        w_lat_new = optimizer_lat.update(w_lat, dwdt_lat)
+        w_vis_new = optimizer_vis.update(w_vis, dwdt_vis)
+
+        self.dendritic_weights[self.num_vis :, :] = w_lat_new
+        self.dendritic_weights[: self.num_vis, :] = w_vis_new
+
+    def _update_rates_and_buffer(self):
+        new_r = eq_phi(self.u, self.neuron_params.a, self.neuron_params.b)
         self.r = new_r
         self.rate_buffer.roll(new_r)
 
-    def simulation_step(self, dt, u_inp):
-        dudt, dvdt, dwdt, dr_bar_dt = self._compute_update(dt, u_inp)
-        self._update_dyanmic_variables(dudt, dvdt, dwdt, dr_bar_dt, dt)
-        self._update_rates_and_buffer(dt)
+    def simulation_step(self, u_inp, optimizer_vis, optimizer_lat):
+        dudt, dvdt, dwdt, dr_bar_dt = self._compute_update(u_inp)
+        self._update_dyanmic_variables(dudt, dvdt, dr_bar_dt)
+        self._update_weights(dwdt, optimizer_vis, optimizer_lat)
+        self._update_rates_and_buffer()
 
 
 #####################################
