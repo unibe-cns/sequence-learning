@@ -84,7 +84,7 @@ class BasePattern(ABC):
         """
         pass
 
-    def _transform(self, transformation: Callable[[npt.NDArray], npt.NDArray]) -> None:
+    def transform(self, transformation: Callable[[npt.NDArray], npt.NDArray]) -> None:
         """Apply a transformation to the whole pattern.
 
         At the moment, the transformation takes only a pattern, no other arguments.
@@ -233,7 +233,7 @@ class Dataloader:
 
         # apply pre-transforms directly once
         for transform in pre_transforms:
-            self.pattern._transform(transform)
+            self.pattern.transform(transform)
 
     def _time_to_idx(self, t: float) -> int:
         return int((t % self.duration) / self.dt)

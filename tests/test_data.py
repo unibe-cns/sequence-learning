@@ -93,14 +93,14 @@ class TestPattern:
 
     def test_transform(self, pattern_factory, base_sequence, transform_plus):
         pat = pattern_factory()
-        pat._transform(transform_plus)
+        pat.transform(transform_plus)
         expected = transform_plus(base_sequence)
         assert_allclose(pat.pattern, expected)
 
     def test_pretransform_reshape_error(self, pattern_factory, transform_reshape):
         pat = pattern_factory()
         with pytest.raises(ValueError) as exc_info:  # noqa
-            pat._transform(transform_reshape)
+            pat.transform(transform_reshape)
 
 
 ################################
