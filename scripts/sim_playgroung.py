@@ -12,10 +12,6 @@ from elise.optimizer import SimpleUpdater
 from elise.rate_buffer import Buffer
 
 if __name__ == "__main__":
-    # Plot theoretical distribution
-    # Plot for p = 0.1, 0.3, 0.5
-    #
-
     # Test dendritic weight matrix creation
     config_location = "config.toml"
     config = FullConfig(config_location)
@@ -33,9 +29,10 @@ if __name__ == "__main__":
         rate_buffer,
     )
 
-    eta = 0.001
-    optimizer_vis = SimpleUpdater(eta)
-    optimizer_lat = SimpleUpdater(eta)
+    eta_in = 0.001
+    eta_lat = 0.01
+    optimizer_vis = SimpleUpdater(eta_in)
+    optimizer_lat = SimpleUpdater(eta_lat)
 
     def create_simple_seq(size):
         start = np.eye(size) * 0.9
@@ -44,14 +41,9 @@ if __name__ == "__main__":
 
         return np.concatenate([start, middle, end])
 
-    reps = 5000
+    reps = 2000
     size = config.network_params.num_vis
     sequence = create_simple_seq(size)
-
-    fig, ax = plt.subplots(1, 1)
-    ax.imshow(sequence, aspect="auto")
-    ax.set_title("Sequence")
-    plt.show()
 
     network.prepare_for_simulation(dt=0.1)
 
@@ -63,7 +55,7 @@ if __name__ == "__main__":
     # Learning
     for rep in tqdm(range(reps)):
         for u_inp in sequence:
-            for i in range(25):
+            for i in range(150):
                 network.simulation_step(u_inp, optimizer_vis, optimizer_lat)
 
                 if rep > reps - 4:
@@ -76,7 +68,7 @@ if __name__ == "__main__":
                     pattern.append(u_inp)
 
     # Replay without input
-    for i in range(500):
+    for i in range(5000):
         u_inp = np.zeros(size)
         network.simulation_step(u_inp, optimizer_vis, optimizer_lat)
 
@@ -87,6 +79,10 @@ if __name__ == "__main__":
         visual_activity.append(vis_act)
         weight_av.append(np.mean(network.dendritic_weights))
         pattern.append(u_inp)
+
+    fig, ax = plt.subplots(1, 1)
+    ax.imshow(sequence, aspect="auto")
+    ax.set_title("Sequence")
 
     fig, ax = plt.subplots(1, 1)
     ax.imshow(latent_activity, aspect="auto")
@@ -105,7 +101,7 @@ if __name__ == "__main__":
     ax.set_title("Input")
 
     # Plot weight matrix
-    fig, ax = plt.subplots(2, 1, figsize=(20, 10))
+    fig, ax = plt.subplots(2, 1, figsize=(8, 4))
     ax[0].imshow(network.dendritic_weights, aspect="auto")
     ax[1].imshow(network.somatic_weights, aspect="auto")
     ax[0].set_title("Dendritic Weight matrix")
