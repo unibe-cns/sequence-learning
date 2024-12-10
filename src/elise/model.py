@@ -273,6 +273,8 @@ class Network:
         self.r_exc = np.ones(self.num_all) * self.r_rest
         self.r_inh = np.ones(self.num_all) * self.r_rest
 
+        self.dt = None
+
     def _compute_buffer_depth(self, dt):
         max_buffer_ms = max(max(self.dendritic_delays), max(self.interneuron_delays))
         buffer_depth = int(max_buffer_ms / dt)
@@ -293,13 +295,27 @@ class Network:
         self.r_inh = self.rate_buffer.get(self.interneuron_delays)
 
         dudt, dvdt, dwdt, dr_bar_dt = total_diff_eq(
-            **self.neuron_params.as_dict(),
+            u=self.u,
+            v=self.v,
             w_den=self.dendritic_weights,
-            w_som=self.somatic_weights,
+            r_bar=self.r_bar,
             r_den=self.r_den,
             r_exc=self.r_exc,
             r_inh=self.r_inh,
             u_inp=u_inp,
+            w_som=self.somatic_weights,
+            C_v=self.neuron_params.C_v,
+            C_u=self.neuron_params.C_u,
+            E_l=self.neuron_params.E_l,
+            E_exc=self.neuron_params.E_exc,
+            E_inh=self.neuron_params.E_inh,
+            g_l=self.neuron_params.g_l,
+            g_den=self.neuron_params.g_den,
+            g_exc_0=self.neuron_params.g_exc_0,
+            g_inh_0=self.neuron_params.g_inh_0,
+            a=self.neuron_params.a,
+            b=self.neuron_params.b,
+            lam=self.neuron_params.lam,
         )
 
         return dudt, dvdt, dwdt, dr_bar_dt
