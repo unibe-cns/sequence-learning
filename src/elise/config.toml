@@ -19,6 +19,7 @@ W_lat_lat = [0.0, 0.5]
 W_lat_vis = [0.0, 0.5]
 d_den = [5, 15]
 d_som = [5, 15]
+d_int = 25
 
 [simulation_params]
 input = 'test'
@@ -41,7 +42,6 @@ g_exc = 0.3
 g_inh = 6.0
 a   = 0.3
 b   = -58.0
-d_int = 25
 lam = 0.6
 
 [data_params]

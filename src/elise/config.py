@@ -27,6 +27,7 @@ class WeightConfig:
     W_lat_vis: tuple = (0.0, 0.5)
     d_den: Tuple[int, int] = (5, 15)
     d_som: Tuple[int, int] = (5, 15)
+    d_int: int = 25
 
 
 @dataclass
@@ -53,7 +54,6 @@ class NeuronConfig:
     g_inh: float = 6.0
     a: float = 0.3
     b: float = -58.0
-    d_int: int = 25
     lam: float = 0.6
 
 
