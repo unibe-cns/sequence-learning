@@ -281,12 +281,14 @@ class Network:
 
         return buffer_depth
 
-    def prepare_for_simulation(self, dt):
+    def prepare_for_simulation(self, dt, optimizer_vis, optimizer_lat):
         # Configure rate buffer for simulation
         self.rate_buffer = Buffer(
             self.num_all, self._compute_buffer_depth(dt), self.r_rest
         )
         self.dt = dt
+        self.optimizer_vis = optimizer_vis
+        self.optimizer_lat = optimizer_lat
 
     def _compute_update(self, u_inp):
         # Compute delayed rates
@@ -331,10 +333,11 @@ class Network:
         self.r = new_r
         self.rate_buffer.roll(new_r)
 
-    def simulation_step(self, dt, u_inp):
-        dudt, dvdt, dwdt, dr_bar_dt = self._compute_update(dt, u_inp)
-        self._update_dyanmic_variables(dudt, dvdt, dwdt, dr_bar_dt, dt)
-        self._update_rates_and_buffer(dt)
+    def simulation_step(self, u_inp):
+        dudt, dvdt, dwdt, dr_bar_dt = self._compute_update(u_inp)
+        self._update_dyanmic_variables(dudt, dvdt, dr_bar_dt)
+        self._update_weights(dwdt, self.optimizer_vis, self.optimizer_lat)
+        self._update_rates_and_buffer()
 
 
 #####################################
