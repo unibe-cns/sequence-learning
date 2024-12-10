@@ -288,7 +288,6 @@ class Network:
         # Update variables u, v, w, r_bar
         # Compute new r
         # Update buffer
-
         pass
 
     def update(self):
