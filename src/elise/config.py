@@ -5,13 +5,13 @@ from dataclasses import dataclass, fields
 from typing import Any, Dict, Tuple
 
 
-@dataclass
+@dataclass(slots=True)
 class NetworkConfig:
     num_lat: int = 50
     num_vis: int = 13
 
 
-@dataclass
+@dataclass(slots=True)
 class WeightConfig:
     w_som_seed: int = 42
     w_den_seed: int = 99
@@ -30,7 +30,7 @@ class WeightConfig:
     d_int: int = 25
 
 
-@dataclass
+@dataclass(slots=True)
 class SimulationConfig:
     input: str = "test"
     dt: float = 0.01
@@ -41,7 +41,7 @@ class SimulationConfig:
     eta_lat: float = 10e-3
 
 
-@dataclass
+@dataclass(slots=True)
 class NeuronConfig:
     C_v: float = 1.0
     C_u: float = 1.0
