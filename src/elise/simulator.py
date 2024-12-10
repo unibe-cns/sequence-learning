@@ -10,7 +10,7 @@ class Simulation:
     def __init__(
         self,
         simulation_params: SimulationConfig,
-        optimizer: Optimizer,
+        Optimizer: Optimizer,
         network: Network,
         logger: Logger,
     ):
@@ -26,7 +26,9 @@ class Simulation:
         # Optimizer
         self.eta_lat = simulation_params.eta_lat / self.dt
         self.eta_vis = simulation_params.eta_out / self.dt
-        self.optimizer_lat = optimizer(self.eta_lat)
-        self.optimizer_out = optimizer(self.eta_vis)
+        self.optimizer_lat = Optimizer(self.eta_lat)
+        self.optimizer_vis = Optimizer(self.eta_vis)
 
-        self.network.prepare_for_simulation(self.dt)
+        self.network.prepare_for_simulation(
+            self.dt, optimizer_vis=self.optimizer_vis, optimizer_lat=self.optimizer_lat
+        )

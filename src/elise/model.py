@@ -327,7 +327,7 @@ class Network:
         self.v += dvdt * self.dt
         self.r_bar += dr_bar_dt * self.dt
 
-    def _update_weights(self, dwdt, optimizer_vis, optimizer_lat):
+    def _update_weights(self, dwdt):
         # Update lat
         w_lat = self.dendritic_weights[self.num_vis :, :]
         w_vis = self.dendritic_weights[: self.num_vis, :]
@@ -335,8 +335,8 @@ class Network:
         dwdt_vis = dwdt[: self.num_vis, :]
 
         # Apply optimizers
-        w_lat_new = optimizer_lat.update(w_lat, dwdt_lat)
-        w_vis_new = optimizer_vis.update(w_vis, dwdt_vis)
+        w_lat_new = self.optimizer_lat.update(w_lat, dwdt_lat)
+        w_vis_new = self.optimizer_vis.update(w_vis, dwdt_vis)
 
         self.dendritic_weights[self.num_vis :, :] = w_lat_new
         self.dendritic_weights[: self.num_vis, :] = w_vis_new
@@ -349,7 +349,7 @@ class Network:
     def simulation_step(self, u_inp):
         dudt, dvdt, dwdt, dr_bar_dt = self._compute_update(u_inp)
         self._update_dyanmic_variables(dudt, dvdt, dr_bar_dt)
-        self._update_weights(dwdt, self.optimizer_vis, self.optimizer_lat)
+        self._update_weights(dwdt)
         self._update_rates_and_buffer()
 
 
