@@ -240,8 +240,8 @@ class Neurons:
         self.E_inh = neuron_params.E_inh
         self.g_l = neuron_params.g_l
         self.g_den = neuron_params.g_den
-        self.g_exc = neuron_params.g_exc
-        self.g_inh = neuron_params.g_inh
+        self.g_exc_0 = neuron_params.g_exc_0
+        self.g_inh_0 = neuron_params.g_inh_0
         self.a = neuron_params.a
         self.b = neuron_params.b
         self.d_den = neuron_params.d_den
@@ -252,11 +252,9 @@ class Neurons:
         # Dynamical variables
         self.v = np.ones(num_neurons) * self.E_l
         self.u = np.ones(num_neurons) * self.E_l
-        self.r_bar = np.ones(num_neurons) * self.phi(self.E_l)
-        self.r = np.ones(num_neurons) * self.phi(self.E_l)
-        self.I_den = np.zeros(num_neurons)
-        self.I_som = np.zeros(num_neurons)
-        self.rate_buffer = rate_buffer(num_neurons)
+        self.r_rest = eq_phi(self.E_l, self.a, self.b)
+        self.r_bar = np.ones(num_neurons) * self.r_rest
+        self.r = np.ones(num_neurons) * self.r_rest
 
 
 class Network:

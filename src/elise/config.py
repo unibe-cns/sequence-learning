@@ -50,8 +50,8 @@ class NeuronConfig:
     E_inh: float = -75.0
     g_l: float = 0.1
     g_den: float = 2.0
-    g_exc: float = 0.3
-    g_inh: float = 6.0
+    g_exc_0: float = 0.3
+    g_inh_0: float = 6.0
     a: float = 0.3
     b: float = -58.0
     lam: float = 0.6
