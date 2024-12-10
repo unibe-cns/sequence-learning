@@ -322,21 +322,34 @@ class Network:
 
         return dudt, dvdt, dwdt, dr_bar_dt
 
-    def _update_dyanmic_variables(self, dudt, dvdt, dwdt, dr_bar_dt, dt):
-        self.u += dudt * dt
-        self.v += dvdt * dt
-        self.r_bar += dr_bar_dt * dt
-        self.dendritic_weights += dwdt * dt
+    def _update_weights(self, dwdt):
+        # Update lat
+        w_lat = self.dendritic_weights[self.num_vis :, :]
+        w_vis = self.dendritic_weights[: self.num_vis, :]
+        dwdt_lat = dwdt[self.num_vis :, :]
+        dwdt_vis = dwdt[: self.num_vis, :]
 
-    def _update_rates_and_buffer(self, dt):
-        new_r = eq_phi(self.u, self.a, self.b)
+        # Apply optimizers
+        w_lat_new = self.optimizer_lat.update(w_lat, dwdt_lat)
+        w_vis_new = self.optimizer_vis.update(w_vis, dwdt_vis)
+
+        self.dendritic_weights[self.num_vis :, :] = w_lat_new
+        self.dendritic_weights[: self.num_vis, :] = w_vis_new
+
+    def _update_dyanmic_variables(self, dudt, dvdt, dr_bar_dt):
+        self.u += dudt * self.dt
+        self.v += dvdt * self.dt
+        self.r_bar += dr_bar_dt * self.dt
+
+    def _update_rates_and_buffer(self):
+        new_r = eq_phi(self.u, self.neuron_params.a, self.neuron_params.b)
         self.r = new_r
         self.rate_buffer.roll(new_r)
 
     def simulation_step(self, u_inp):
         dudt, dvdt, dwdt, dr_bar_dt = self._compute_update(u_inp)
         self._update_dyanmic_variables(dudt, dvdt, dr_bar_dt)
-        self._update_weights(dwdt, self.optimizer_vis, self.optimizer_lat)
+        self._update_weights(dwdt)
         self._update_rates_and_buffer()
 
 
