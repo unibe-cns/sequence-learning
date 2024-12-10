@@ -229,43 +229,16 @@ class SomaticWeights(Weights):
         return weight_matrix
 
 
-class Neurons:
-    def __init__(self, neuron_params: NeuronConfig, num_neurons: int):
-        # Parameters
-        self.C_v = neuron_params.C_v
-        self.C_u = neuron_params.C_u
-        self.E_l = neuron_params.E_l
-        self.E_exc = neuron_params.E_exc
-        self.E_inh = neuron_params.E_inh
-        self.g_l = neuron_params.g_l
-        self.g_den = neuron_params.g_den
-        self.g_exc_0 = neuron_params.g_exc_0
-        self.g_inh_0 = neuron_params.g_inh_0
-        self.a = neuron_params.a
-        self.b = neuron_params.b
-        self.lam = neuron_params.lam
-
-        # Dynamical variables
-        self.r_rest = eq_phi(self.E_l, self.a, self.b)
-        self.v = np.ones(num_neurons) * self.E_l
-        self.u = np.ones(num_neurons) * self.E_l
-        self.r_bar = np.ones(num_neurons) * self.r_rest
-        self.r = np.ones(num_neurons) * self.r_rest
-        self.I_den = np.zeros(num_neurons)
-        self.I_som = np.zeros(num_neurons)
-
-
 class Network:
     def __init__(
         self,
         network_params: NetworkConfig,
-        weight_params: WeightConfig,
         neuron_params: NeuronConfig,
         dendritic_weights: DendriticWeights,
         somatic_weights: SomaticWeights,
-        neurons: Neurons,
         rate_buffer: Buffer,
     ):
+        self.neuron_params = neuron_params
         self.num_lat = network_params.num_lat
         self.num_vis = network_params.num_vis
         self.num_all = self.num_lat + self.num_vis
@@ -276,13 +249,22 @@ class Network:
         self.somatic_weights, self.somatic_delays = somatic_weights(
             self.num_vis, self.num_lat
         )
-        self.interneuron_delays = self.somatic_delays + weight_params.d_int
-        self.neurons = neurons(neuron_params, self.num_all)
+
+        self.interneuron_delays = somatic_weights.create_interneuron_delays()
+
+        self.r_rest = eq_phi(
+            self.neuron_params.E_l, self.neuron_params.a, self.neuron_params.b
+        )
 
         # Setup Buffer
-        buffer_depth = max(max(self.dendritic_delays), max(self.interneuron_delays))
-        val = self.neurons.r_rest
-        self.rate_buffer = rate_buffer(self.num_all, buffer_depth, val)
+        buffer_depth = self._compute_max_delay()
+        self.rate_buffer = rate_buffer(self.num_all, buffer_depth, self.r_rest)
+
+        # Dynamical variables
+        self.v = np.ones(self.num_all) * self.neuron_params.E_l
+        self.u = np.ones(self.num_all) * self.neuron_params.E_l
+        self.r_bar = np.ones(self.num_all) * self.r_rest
+        self.r = np.ones(self.num_all) * self.r_rest
 
     def _compute_update(self, dt, u_inp):
         # Compute delayed rates
@@ -290,14 +272,10 @@ class Network:
         r_exc = self.rate_buffer.get(self.somatic_delays)
         r_inh = self.rate_buffer.get(self.interneuron_delays)
 
-        neuron_params = self.neurons.as_dict()
-        w_den = self.dendritic_weights
-        w_som = self.somatic_weights
-
         dudt, dvdt, dwdt, dr_bar_dt = total_diff_eq(
-            **neuron_params,
-            w_den=w_den,
-            w_som=w_som,
+            **self.neuron_params.as_dict(),
+            w_den=self.dendritic_weights,
+            w_som=self.somatic_weights,
             r_den=r_den,
             r_exc=r_exc,
             r_inh=r_inh,
@@ -306,15 +284,22 @@ class Network:
 
         return dudt, dvdt, dwdt, dr_bar_dt
 
+    def _compute_max_delay(self):
+        return max(
+            max(self.dendritic_delays),
+            max(self.somatic_delays),
+            max(self.interneuron_delays),
+        )
+
     def _update_dyanmic_variables(self, dudt, dvdt, dwdt, dr_bar_dt, dt):
-        self.neurons.u += dudt * dt
-        self.neurons.v += dvdt * dt
-        self.neurons.r_bar += dr_bar_dt * dt
+        self.u += dudt * dt
+        self.v += dvdt * dt
+        self.r_bar += dr_bar_dt * dt
         self.dendritic_weights += dwdt * dt
 
     def _update_rates_and_buffer(self, dt):
-        new_r = eq_phi(self.neurons.u, self.neurons.a, self.neurons.b)
-        self.neurons.r = new_r
+        new_r = eq_phi(self.u, self.a, self.b)
+        self.r = new_r
         self.rate_buffer.roll(new_r)
 
     def simulation_step(self, dt, u_inp):
