@@ -273,6 +273,19 @@ class Network:
         self.r_exc = np.ones(self.num_all) * self.r_rest
         self.r_inh = np.ones(self.num_all) * self.r_rest
 
+    def _compute_buffer_depth(self, dt):
+        max_buffer_ms = max(max(self.dendritic_delays), max(self.interneuron_delays))
+        buffer_depth = int(max_buffer_ms / dt)
+
+        return buffer_depth
+
+    def prepare_for_simulation(self, dt):
+        # Configure rate buffer for simulation
+        self.rate_buffer = Buffer(
+            self.num_all, self._compute_buffer_depth(dt), self.r_rest
+        )
+        self.dt = dt
+
     def _compute_update(self, u_inp):
         # Compute delayed rates
         self.r_den = self.rate_buffer.get(self.dendritic_delays)
@@ -286,23 +299,10 @@ class Network:
             r_den=self.r_den,
             r_exc=self.r_exc,
             r_inh=self.r_inh,
-            u_inp=self.u_inp,
+            u_inp=u_inp,
         )
 
         return dudt, dvdt, dwdt, dr_bar_dt
-
-    def prepare_for_simulation(self, dt):
-        # Configure rate buffer for simulation
-        self.network.rate_buffer = Buffer(
-            self.network.num_all, self.network._compute_buffer_depth(dt)
-        )
-
-    def _compute_buffer_depth(self, dt):
-        return max(
-            max(self.dendritic_delays),
-            max(self.somatic_delays),
-            max(self.interneuron_delays),
-        )
 
     def _update_dyanmic_variables(self, dudt, dvdt, dwdt, dr_bar_dt, dt):
         self.u += dudt * dt
