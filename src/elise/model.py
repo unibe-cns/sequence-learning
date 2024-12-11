@@ -4,10 +4,10 @@ from typing import Tuple
 import numba
 import numpy as np
 import numpy.typing as npt
-from weights import DendriticWeights, SomaticWeights
 
 from .config import NetworkConfig, NeuronConfig
 from .rate_buffer import Buffer
+from .weights import DendriticWeights, SomaticWeights
 
 # disable numba jit for debugging etc.
 numba.config.DISABLE_JIT = False
