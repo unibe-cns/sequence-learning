@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
         return np.concatenate([start, middle, end])
 
-    reps = 5000
+    reps = 200
     size = config.network_params.num_vis
     sequence = create_simple_seq(size)
 
@@ -51,7 +51,9 @@ if __name__ == "__main__":
     ax.set_title("Sequence")
     plt.show()
 
-    network.prepare_for_simulation(dt=0.1)
+    network.prepare_for_simulation(
+        dt=0.1, optimizer_vis=optimizer_vis, optimizer_lat=optimizer_lat
+    )
 
     latent_activity = []
     visual_activity = []
@@ -62,7 +64,7 @@ if __name__ == "__main__":
     for rep in tqdm(range(reps)):
         for u_inp in sequence:
             for i in range(25):
-                network.simulation_step(u_inp, optimizer_vis, optimizer_lat)
+                network.simulation_step(u_inp)
 
                 if rep > reps - 4:
                     lat_act = copy.deepcopy(network.u[size:])
@@ -76,7 +78,7 @@ if __name__ == "__main__":
     # Replay without input
     for i in range(500):
         u_inp = np.zeros(size)
-        network.simulation_step(u_inp, optimizer_vis, optimizer_lat)
+        network.simulation_step(u_inp)
 
         lat_act = copy.deepcopy(network.u[size:])
         vis_act = copy.deepcopy(network.u[:size])
