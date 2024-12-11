@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 
-from elise.model import SomaticWeights
+from elise.weights import SomaticWeights
 
 
 def test_create_weight_matrix_basic(default_weight_config, default_network_config):
