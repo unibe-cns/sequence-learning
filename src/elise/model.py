@@ -121,7 +121,7 @@ class Network:
         self.r = new_r
         self.rate_buffer.roll(new_r)
 
-    def simulation_step(self, u_inp):
+    def __call__(self, u_inp):
         dudt, dvdt, dwdt, dr_bar_dt = self._compute_update(u_inp)
         self._update_dyanmic_variables(dudt, dvdt, dr_bar_dt)
         self._update_weights(dwdt)
