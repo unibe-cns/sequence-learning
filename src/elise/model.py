@@ -59,7 +59,7 @@ class Weights(ABC):
         return delays
 
     @abstractmethod
-    def _create_weight_matrix(self, num_vis: int, num_lat: int):
+    def _create_weight_matrix(self, num_vis: int, num_lat: int) -> Tuple[npt.NDArray]:
         pass
 
 
