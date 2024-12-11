@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from elise.data import Dataloader, OneHotPattern, Pattern
+from elise.data import Dataloader, MultiHotPattern, OneHotPattern, Pattern
 
 DT = 0.1
 
@@ -120,6 +120,32 @@ def onehot_pattern(onehot_sequence):
 
 def test_onehot(onehot_pattern, base_sequence):
     assert_allclose(onehot_pattern[:, :], base_sequence)
+
+
+##################################
+# Test the MultiHotPattern class #
+##################################
+
+
+@pytest.fixture()
+def multihot_sequence():
+    return [2, [1, 4], -1]
+
+
+@pytest.fixture()
+def multihot_pattern(multihot_sequence):
+    return MultiHotPattern(multihot_sequence, duration=0.3, width=5)
+
+
+def test_multihot(multihot_pattern):
+    expected = np.array(
+        [
+            [0.0, 0.0, 1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0, 1.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0],
+        ]
+    )
+    assert_allclose(multihot_pattern[:, :], expected)
 
 
 ###################

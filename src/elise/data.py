@@ -190,6 +190,46 @@ class OneHotPattern(BasePattern):
         return res
 
 
+class MultiHotPattern(BasePattern):
+    """
+    Same as OneHot, but more then one can be active at a time.
+
+    Encode it as:
+    [2, 4, [0, 3], [0, 3], -1]
+
+    If an entry is -1, there's no, the whole vector is zero (= a pause in the pattern)
+    """
+
+    def __init__(
+        self, pattern: List[int | List[int]], duration: float, width: int
+    ) -> None:
+        """DOCSTRING."""
+        # max in list:
+        max_val = -1000000
+        for i in pattern:
+            if isinstance(i, int) and i > max_val:
+                max_val = i
+            elif isinstance(i, list):
+                for j in i:
+                    if j > max_val:
+                        max_val = j
+        if max_val > width - 1:
+            raise ValueError(
+                "width must be greater then or equal to the maximum value in pattern"
+            )
+        self._width = width
+        super().__init__(pattern, duration=duration)
+
+    def _convert(self, pattern):
+        res = np.zeros((len(pattern), self._width))
+        for i, pat in enumerate(pattern):
+            if isinstance(pat, int) and pat == -1:
+                continue
+            else:
+                res[i, pat] = 1.0
+        return res
+
+
 class Dataloader:
     """
     Dataloader for pattern data.
