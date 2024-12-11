@@ -258,7 +258,7 @@ class Network:
         self.somatic_weights, self.somatic_delays = somatic_weights(
             self.num_vis, self.num_lat
         )
-        self.interneuron_delays = somatic_weights.create_interneuron_delays()
+        self.interneuron_delays = self.somatic_weights.create_interneuron_delays()
 
         self.r_rest = eq_phi(
             self.neuron_params.E_l, self.neuron_params.a, self.neuron_params.b
