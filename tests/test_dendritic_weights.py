@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-
 import numpy as np
 
-from elise.model import DendriticWeights
+from elise.weights import DendriticWeights
 
 
 def test_create_weight_matrix_basic(default_weight_config, default_network_config):
