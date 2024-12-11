@@ -1,7 +1,7 @@
 seed = 69
 
 [network_params]
-num_lat = 50
+num_lat = 30
 num_vis = 13
 
 [weight_params]

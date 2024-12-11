@@ -12,7 +12,6 @@ from elise.rate_buffer import Buffer
 if __name__ == "__main__":
     # Plot theoretical distribution
     # Plot for p = 0.1, 0.3, 0.5
-    #
 
     # Test dendritic weight matrix creation
     config_location = "config.toml"
@@ -42,7 +41,8 @@ if __name__ == "__main__":
 
         return np.concatenate([start, middle, end])
 
-    reps = 200
+    reps = 500
+    note_length = 25
     size = config.network_params.num_vis
     sequence = create_simple_seq(size)
 
@@ -61,19 +61,31 @@ if __name__ == "__main__":
     weight_av = []
 
     # Learning
+    # Add timing
+    import time
+
+    u_inp = np.zeros(size)
+    network.simulation_step(u_inp)
+
+    start_ = time.time()
     for rep in tqdm(range(reps)):
         for u_inp in sequence:
-            for i in range(25):
+            for i in range(note_length):
                 network.simulation_step(u_inp)
 
-                if rep > reps - 4:
-                    lat_act = copy.deepcopy(network.u[size:])
-                    vis_act = copy.deepcopy(network.u[:size])
+                # if rep > reps - 4:
+                #     lat_act = copy.deepcopy(network.u[size:])
+                #     vis_act = copy.deepcopy(network.u[:size])
 
-                    latent_activity.append(lat_act)
-                    visual_activity.append(vis_act)
-                    weight_av.append(np.mean(network.dendritic_weights))
-                    pattern.append(u_inp)
+                # latent_activity.append(lat_act)
+                # visual_activity.append(vis_act)
+                # weight_av.append(np.mean(network.dendritic_weights))
+                # pattern.append(u_inp)
+    end_ = time.time()
+    total_time = end_ - start_
+    nr_steps = reps * len(sequence) * note_length
+    time_per_step = total_time / nr_steps
+    print(f"time per step: {time_per_step}")
 
     # Replay without input
     for i in range(500):
