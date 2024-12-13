@@ -336,7 +336,6 @@ def total_diff_eq(
     of the model, such as eq_i_den, eq_syn_cond, eq_i_som, etc.
     """
     phi_el = eq_phi(E_l, a, b)
-    num_vis = len(u_inp)
 
     # somato-dendritic connections
     i_den = eq_i_den(r_den, w_den)  # eq. 8
@@ -345,12 +344,15 @@ def total_diff_eq(
     g_exc = eq_syn_cond(r_exc, g_exc_0, phi_el)  # eq. 10
     g_inh = eq_syn_cond(r_inh, g_inh_0, phi_el)  # eq. 11
     i_som = eq_i_som(w_som, g_exc, g_inh, u, E_exc, E_inh)
-    # input to visible layer
-    g_exc_inp = eq_cond_exc_inp(u_inp, lam, g_l, g_den, E_exc, E_inh)
-    g_inh_inp = eq_cond_inh_inp(u_inp, lam, g_l, g_den, E_exc, E_inh)
-    i_som_inp = eq_i_inp(g_exc_inp, g_inh_inp, u[:num_vis], E_exc, E_inh)
-    # total somatic input current:
-    i_som[:num_vis] += i_som_inp
+
+    if u_inp is not None:
+        # input to visible layer
+        num_vis = len(u_inp)
+        g_exc_inp = eq_cond_exc_inp(u_inp, lam, g_l, g_den, E_exc, E_inh)
+        g_inh_inp = eq_cond_inh_inp(u_inp, lam, g_l, g_den, E_exc, E_inh)
+        i_som_inp = eq_i_inp(g_exc_inp, g_inh_inp, u[:num_vis], E_exc, E_inh)
+        # total somatic input current:
+        i_som[:num_vis] += i_som_inp
 
     # differential equations:
     dvdt = eq_dvdt(v, i_den, C_v, g_l, E_l)
