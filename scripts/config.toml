@@ -24,6 +24,7 @@ d_int = 25
 [simulation_params]
 input = 'test'
 dt = 0.01
+pattern_dt = 0.25
 training_cycles = 1000
 validation_cycles = 1
 replay_cycles = 100
