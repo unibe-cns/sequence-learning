@@ -34,6 +34,7 @@ class WeightConfig:
 class SimulationConfig:
     input: str = "test"
     dt: float = 0.01
+    pattern_dt: float = 0.25
     training_cycles: int = 1000
     validation_cycles: int = 100
     replay_cycles: int = 100
