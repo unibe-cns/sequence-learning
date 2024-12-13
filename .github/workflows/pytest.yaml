@@ -31,7 +31,7 @@ jobs:
       run: echo $PATH
 
     - name: ls
-      run: ls
+      run: ls -lah
 
     - name: pwd
       run: pwd
