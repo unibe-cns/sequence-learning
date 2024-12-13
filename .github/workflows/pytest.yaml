@@ -27,6 +27,15 @@ jobs:
     - name: check python
       run: python --version
 
+    - name: Print PATH
+      run: echo $PATH
+
+    - name: ls
+      run: ls
+
+    - name: pwd
+      run: pwd
+
     - name: Install python3-venv
       run: sudo apt-get update && sudo apt-get install -y python3-venv
 
