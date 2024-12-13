@@ -31,10 +31,21 @@ def test_pearson_coef(sample_data, sample_target):
     assert -1 <= result <= 1
 
 
+def test_pearson_coef_perfect_correlation(sample_target):
+    data = sample_target * -0.32
+    result = pearson_coef(data, sample_target)
+    assert result == pytest.approx(-1.0)
+
+
 def test_mse(sample_data, sample_target):
     result = mse(sample_data[:10], sample_target)
     assert isinstance(result, float)
     assert result >= 0
+
+
+def test_mse_perfect_values(sample_target):
+    result = mse(sample_target, sample_target)
+    assert result == pytest.approx(0.0)
 
 
 def test_window_slider_with_pearson(sample_data, sample_target):
