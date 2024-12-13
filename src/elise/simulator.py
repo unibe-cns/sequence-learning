@@ -42,7 +42,7 @@ class Simulation:
     def epoch(self, teacher=None):
         start = 0
         stop = self.dataloader.duration
-        for t, u_tgt in self.dataloader.iter(start, stop, self.dt):
+        for _, u_tgt in self.dataloader.iter(start, stop, self.dt):
             if teacher:
                 self.network(u_inp=u_tgt)
             elif not teacher:
@@ -54,10 +54,10 @@ class Simulation:
 
     def training(self):
         print("Training")
-        for t in tqdm(range(self.training_cycles)):
+        for tc in tqdm(range(self.training_cycles)):
             self.epoch(teacher=True)
 
-            if t % self.validation_interval == 0:
+            if tc % self.validation_interval == 0:
                 for v in range(self.validation_cycles):
                     self.epoch(teacher=False)
 
@@ -65,7 +65,7 @@ class Simulation:
 
     def replay(self):
         print("Replay")
-        for r in tqdm(range(self.replay_cycles)):
+        for rc in tqdm(range(self.replay_cycles)):
             self.epoch(teacher=False)
 
             # Replay logging
