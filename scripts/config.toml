@@ -24,7 +24,8 @@ d_int = 25
 [simulation_params]
 input = 'test'
 dt = 0.01
-training_cycles = 10e4
+training_cycles = 1000
+validation_cycles = 1
 replay_cycles = 100
 validation_interval = 20
 eta_out = 10e-4
