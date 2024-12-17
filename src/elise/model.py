@@ -61,15 +61,19 @@ class Network:
         self.rate_buffer = Buffer(
             self.num_all, self._compute_buffer_depth(dt), self.r_rest
         )
+
         self.dt = dt
         self.optimizer_vis = optimizer_vis
         self.optimizer_lat = optimizer_lat
+        self.dt_dendritic_delays = (self.dendritic_delays / dt).astype(int)
+        self.dt_somatic_delays = (self.somatic_delays / dt).astype(int)
+        self.dt_interneuron_delays = (self.interneuron_delays / dt).astype(int)
 
     def _compute_update(self, u_inp):
         # Compute delayed rates
-        self.r_den = self.rate_buffer.get(self.dendritic_delays)
-        self.r_exc = self.rate_buffer.get(self.somatic_delays)
-        self.r_inh = self.rate_buffer.get(self.interneuron_delays)
+        self.r_den = self.rate_buffer.get(self.dt_dendritic_delays)
+        self.r_exc = self.rate_buffer.get(self.dt_somatic_delays)
+        self.r_inh = self.rate_buffer.get(self.dt_interneuron_delays)
 
         dudt, dvdt, dwdt, dr_bar_dt = total_diff_eq(
             u=self.u,
