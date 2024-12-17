@@ -98,19 +98,32 @@ class Network:
         return dudt, dvdt, dwdt, dr_bar_dt
 
     def _update_weights(self, dwdt):
-        # Update lat
+        # Vis view
+        dwdt_vis = dwdt[: self.num_vis, : self.num_vis]
 
-        w_lat = self.dendritic_weights[self.num_vis :, :]
-        w_vis = self.dendritic_weights[: self.num_vis, :]
-        dwdt_lat = dwdt[self.num_vis :, :]
-        dwdt_vis = dwdt[: self.num_vis, :]
-
-        # Apply optimizers
-        w_lat_update = self.optimizer_lat.get_update(w_lat, dwdt_lat) * self.dt
+        # Update Vis
+        w_vis = self.dendritic_weights[: self.num_vis, : self.num_vis]
         w_vis_update = self.optimizer_vis.get_update(w_vis, dwdt_vis) * self.dt
+        self.dendritic_weights[: self.num_vis, : self.num_vis] += w_vis_update
 
-        self.dendritic_weights[self.num_vis :, :] += w_lat_update
-        self.dendritic_weights[: self.num_vis, :] += w_vis_update
+        # Update Rest
+        dwdt_vis[:] = 0  # Set vis slice to 0
+        w_rest = self.dendritic_weights
+        w_rest_update = self.optimizer_lat.get_update(w_rest, dwdt) * self.dt
+        self.dendritic_weights += w_rest_update
+
+        # w_rest_update = dwdt[:self.num_vis, :self.num_vis]
+        # w_rest = self.dendritic_weights[self.num_vis :, :]
+        # w_vis = self.dendritic_weights[: self.num_vis, :]
+        # dwdt_rest = dwdt[self.num_vis :, :]
+        # dwdt_vis = dwdt[: self.num_vis, :]
+
+        # # Apply optimizers
+        # w_rest_update = self.optimizer_lat.get_update(w_rest, dwdt_rest) * self.dt
+        # w_vis_update = self.optimizer_vis.get_update(w_vis, dwdt_vis) * self.dt
+
+        # self.dendritic_weights[self.num_vis :, :] += w_rest_update
+        # self.dendritic_weights[: self.num_vis, :] += w_vis_update
 
     def _update_dyanmic_variables(self, dudt, dvdt, dr_bar_dt):
         self.u += dudt * self.dt
