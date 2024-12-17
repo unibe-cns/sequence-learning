@@ -380,7 +380,10 @@ def test_dwdt(sample_u, sample_v, sample_r, std_nrn, std_nw):
     expected = np.zeros((n_tot, n_tot))
     for i in range(n_tot):
         for j in range(n_tot):
-            expected[j, i] = (phi_u[j] - phi_v[j]) * sample_r[i]
+            if i == j:
+                expected[j, i] = 0.0
+            else:
+                expected[j, i] = (phi_u[j] - phi_v[j]) * sample_r[i]
 
     assert_allclose(res, expected)
 

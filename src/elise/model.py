@@ -99,6 +99,7 @@ class Network:
 
     def _update_weights(self, dwdt):
         # Update lat
+
         w_lat = self.dendritic_weights[self.num_vis :, :]
         w_vis = self.dendritic_weights[: self.num_vis, :]
         dwdt_lat = dwdt[self.num_vis :, :]
@@ -245,6 +246,8 @@ def eq_dudt(
 def eq_dwdt(phi_u: npt.NDArray, phi_v: npt.NDArray, r_bar: npt.NDArray) -> npt.NDArray:
     """Urbanczik-Senn plasiticity rule."""
     dwdt = np.outer(phi_u - phi_v, r_bar)
+    np.fill_diagonal(dwdt, 0)
+
     return dwdt
 
 
