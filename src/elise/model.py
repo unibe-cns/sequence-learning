@@ -50,6 +50,9 @@ class Network:
 
         self.dt = None
 
+    def get_output(self):
+        return np.copy(self.u[: self.num_vis])
+
     def _compute_buffer_depth(self, dt):
         max_buffer_ms = max(max(self.dendritic_delays), max(self.interneuron_delays))
         buffer_depth = int(max_buffer_ms / dt)
