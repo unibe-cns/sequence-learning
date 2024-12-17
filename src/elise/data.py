@@ -331,3 +331,18 @@ class Dataloader:
         while t < t_stop:
             yield t, self.__call__(t, offset=dt * 0.01)
             t += dt
+
+    def get_full_pattern(self, dt):
+        """Return the full pattern."""
+        """
+        :param dt: Simulation time step
+        :type dt: float
+        :return: Full pattern
+        :rtype: npt.NDArray
+        """
+
+        full_pattern = []
+        for _, pattern in self.iter(0, self.duration, dt):
+            full_pattern.append(pattern)
+
+        return np.array(full_pattern)
