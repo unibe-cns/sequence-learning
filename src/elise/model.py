@@ -28,10 +28,10 @@ class Network:
         self.num_all = self.num_lat + self.num_vis
 
         self.dendritic_weights, self.dendritic_delays = dendritic_weights(
-            self.num_lat, self.num_vis
+            num_vis=self.num_vis, num_lat=self.num_lat
         )
         self.somatic_weights, self.somatic_delays = somatic_weights(
-            self.num_vis, self.num_lat
+            num_vis=self.num_vis, num_lat=self.num_lat
         )
         self.interneuron_delays = somatic_weights.create_interneuron_delays()
 
@@ -49,6 +49,9 @@ class Network:
         self.r_inh = np.ones(self.num_all) * self.r_rest
 
         self.dt = None
+
+    def get_output(self):
+        return np.copy(self.u[: self.num_vis])
 
     def _compute_buffer_depth(self, dt):
         max_buffer_ms = max(max(self.dendritic_delays), max(self.interneuron_delays))
