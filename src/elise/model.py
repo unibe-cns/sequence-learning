@@ -50,6 +50,24 @@ class Network:
 
         self.dt = None
 
+    def get_output(self):
+        """
+        Retrieve the output of visible neurons.
+
+        :returns: Copy of activation values for visible neurons
+        :rtype: numpy.ndarray
+
+        .. note::
+            Returns a copy of the first `num_vis` neurons' activation values to prevent
+            unintended modifications of the network's internal state.
+
+        .. seealso::
+            * `self.u`: Internal activation array
+            * `self.num_vis`: Number of visible neurons
+
+        """
+        return np.copy(self.u[: self.num_vis])
+
     def _compute_buffer_depth(self, dt):
         max_buffer_ms = max(max(self.dendritic_delays), max(self.interneuron_delays))
         buffer_depth = int(max_buffer_ms / dt)
