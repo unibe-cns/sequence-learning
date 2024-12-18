@@ -7,10 +7,10 @@ class Optimizer(ABC):
         self.eta = eta
 
     @abstractmethod
-    def update(self, weights, step):
+    def get_update(self, weights, step):
         raise NotImplementedError("Subclasses must implement this method")
 
 
 class SimpleUpdater(Optimizer):
-    def update(self, weights, step):
-        return weights + (step * self.eta)
+    def get_update(self, weights, dwdt):
+        return dwdt * self.eta

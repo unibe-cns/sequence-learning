@@ -120,18 +120,19 @@ class Network:
         return dudt, dvdt, dwdt, dr_bar_dt
 
     def _update_weights(self, dwdt):
-        # Update lat
-        w_lat = self.dendritic_weights[self.num_vis :, :]
-        w_vis = self.dendritic_weights[: self.num_vis, :]
-        dwdt_lat = dwdt[self.num_vis :, :]
-        dwdt_vis = dwdt[: self.num_vis, :]
+        # Vis view
+        dwdt_vis = dwdt[: self.num_vis, : self.num_vis]
 
-        # Apply optimizers
-        w_lat_new = self.optimizer_lat.update(w_lat, dwdt_lat)
-        w_vis_new = self.optimizer_vis.update(w_vis, dwdt_vis)
+        # Update Vis
+        w_vis = self.dendritic_weights[: self.num_vis, : self.num_vis]
+        w_vis_update = self.optimizer_vis.get_update(w_vis, dwdt_vis) * self.dt
+        self.dendritic_weights[: self.num_vis, : self.num_vis] += w_vis_update
 
-        self.dendritic_weights[self.num_vis :, :] = w_lat_new
-        self.dendritic_weights[: self.num_vis, :] = w_vis_new
+        # Update Rest
+        dwdt_vis[:] = 0  # Set vis slice to 0
+        w_rest = self.dendritic_weights
+        w_rest_update = self.optimizer_lat.get_update(w_rest, dwdt) * self.dt
+        self.dendritic_weights += w_rest_update
 
     def _update_dyanmic_variables(self, dudt, dvdt, dr_bar_dt):
         self.u += dudt * self.dt
@@ -267,6 +268,8 @@ def eq_dudt(
 def eq_dwdt(phi_u: npt.NDArray, phi_v: npt.NDArray, r_bar: npt.NDArray) -> npt.NDArray:
     """Urbanczik-Senn plasiticity rule."""
     dwdt = np.outer(phi_u - phi_v, r_bar)
+    np.fill_diagonal(dwdt, 0)
+
     return dwdt
 
 
