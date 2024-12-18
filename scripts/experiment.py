@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
-from plotting import plot_weights
+from plotting import plot_activity, plot_weights
 from tqdm import tqdm
 
 from elise.config import FullConfig
@@ -68,14 +68,8 @@ full_pattern = dataloader.get_full_pattern(dt)
 
 training_duration = 10 * pat_duration
 validation_duration = 0 * pat_duration
-replay_duration = 2 * pat_duration
-num_epochs = 250
-
-pat = np.loadtxt("fuer_elise_short.txt", delimiter=",", skiprows=1).astype(int)
-pat_duration = 25.0
-pattern_width = network_params.num_vis
-fuer_elise = MultiHotPattern(pat, pat_duration, pattern_width)
-data_loader = Dataloader(fuer_elise, pre_transforms=[to_biounits])
+replay_duration = 6 * pat_duration
+num_epochs = 10
 
 pre_transform = []
 
@@ -119,89 +113,7 @@ for _, u_tgt in dataloader.iter(0, replay_duration, dt):
 simulation_output = np.array(simulation_output)
 target = np.array(target)
 
-# r_bar = np.array(r_bar)
-
-# # Plot r bar
-# fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-# ax.plot(r_bar)
-# ax.set_title("R bar")
-# ax.set_xlabel("Time step")
-# ax.set_ylabel("R bar")
-# ax.grid(True, linestyle='--', alpha=0.3)
-
-
-# fig, axs = plt.subplots(4, 1, figsize=(12, 20), sharex=True)
-# fig.suptitle('Weight Progression Throughout Simulation', fontsize=16)
-
-# weight_types = ['vis_vis', 'vis_lat', 'lat_lat', 'lat_vis']
-# titles = ['Visible-to-Visible',
-# 'Visible-to-Lateral',
-# 'Lateral-to-Lateral',
-# 'Lateral-to-Visible']
-
-# for i, (weight_type, title) in enumerate(zip(weight_types, titles)):
-#     weight_data = weights[weight_type]
-
-#     # Plot each weight progression
-#     for j in range(weight_data.shape[1]):
-#         axs[i].plot(weight_data[:, j], alpha=0.5, linewidth=0.5)
-
-#     axs[i].set_title(f'{title} Weights')
-#     axs[i].set_ylabel('Weight Value')
-#     axs[i].grid(True, linestyle='--', alpha=0.3)
-
-# axs[-1].set_xlabel('Time Step')
-
-# plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout to make room for the title
-
-
-# def plot_weights_over_time(weights):
-
-#     fig, axs = plt.subplots(4, 1, figsize=(20, 20))
-#     axs = axs.flatten()
-#     ax_labels = ['vis_vis', 'vis_lat', 'lat_lat', 'lat_vis']
-#     ax_titles = ['Vis-Vis Weights',
-#     'Vis-Lat Weights',
-#     'Lat-Lat Weights',
-#     'Lat-Vis Weights']
-#     ax[0].set_title('Weights Over Time')
-
-#     for i, ax in enumerate(axs):
-
-#         ax.imshow(weights[ax_labels[i]], aspect="auto", interpolation="none")
-#         ax.set_title(ax_titles[i])
-#         ax.set_ylabel("Neuron index")
-#         ax.set_xlabel("Neuron index")
-
-
-#     plt.tight_layout()
-
-# plt.show()
-
-# Create a figure with two subplots, sharing the x-axis
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
-
-# Plot simulation output
-last = (2 * len(full_pattern)) + int(replay_duration / dt)
-
-im1 = ax1.imshow(simulation_output[-last:].T, aspect="auto", interpolation="none")
-colorbar1 = fig.colorbar(im1, ax=ax1)
-colorbar1.set_label("Output activity")
-ax1.set_ylabel("Neuron index")
-ax1.set_title("Simulation output")
-
-# Plot target output
-im2 = ax2.imshow(target[-last:].T, aspect="auto", interpolation="none")
-colorbar2 = fig.colorbar(im2, ax=ax2)
-colorbar2.set_label("Output activity")
-ax2.set_xlabel("Time (ms)")
-ax2.set_ylabel("Neuron index")
-ax2.set_title("Target output")
-
-# Adjust layout and show the plot
-plt.tight_layout()
+plot_activity(simulation_output, target, full_pattern, replay_duration, dt)
+plot_weights(network)
 
 plt.show()
-
-plot_weights(network)
-breakpoint()
