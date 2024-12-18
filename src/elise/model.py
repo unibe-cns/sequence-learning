@@ -112,19 +112,6 @@ class Network:
         w_rest_update = self.optimizer_lat.get_update(w_rest, dwdt) * self.dt
         self.dendritic_weights += w_rest_update
 
-        # w_rest_update = dwdt[:self.num_vis, :self.num_vis]
-        # w_rest = self.dendritic_weights[self.num_vis :, :]
-        # w_vis = self.dendritic_weights[: self.num_vis, :]
-        # dwdt_rest = dwdt[self.num_vis :, :]
-        # dwdt_vis = dwdt[: self.num_vis, :]
-
-        # # Apply optimizers
-        # w_rest_update = self.optimizer_lat.get_update(w_rest, dwdt_rest) * self.dt
-        # w_vis_update = self.optimizer_vis.get_update(w_vis, dwdt_vis) * self.dt
-
-        # self.dendritic_weights[self.num_vis :, :] += w_rest_update
-        # self.dendritic_weights[: self.num_vis, :] += w_vis_update
-
     def _update_dyanmic_variables(self, dudt, dvdt, dr_bar_dt):
         self.u += dudt * self.dt
         self.v += dvdt * self.dt
