@@ -25,9 +25,6 @@ def plot_weights(network):
     # Adjust layout to prevent overlap
     plt.tight_layout()
 
-    # Show the plot
-    plt.show()
-
 
 def plot_weights_over_time(weights):
     fig, axs = plt.subplots(4, 1, figsize=(12, 20), sharex=True)
