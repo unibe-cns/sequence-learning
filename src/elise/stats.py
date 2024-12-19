@@ -30,6 +30,23 @@ def window_slider(
     return np.array([func(chunk, target) for chunk in windows])
 
 
+def pearson_coef_(data: npt.NDArray, target: npt.NDArray):
+    """
+    Calculate the mean Pearson correlation coefficient between data and target.
+
+    THIS VERSION REQUIRES SCIPY VERSION 1.14!
+
+    :param data: Input data array
+    :type data: npt.NDArray
+    :param target: Target array
+    :type target: npt.NDArray
+    :return: Mean Pearson correlation coefficient
+    :rtype: float
+    """
+    p_coefs = pearsonr(data, target, axis=0).statistic
+    return np.mean(p_coefs)
+
+
 def pearson_coef(data: npt.NDArray, target: npt.NDArray):
     """
     Calculate the mean Pearson correlation coefficient between data and target.
@@ -41,7 +58,12 @@ def pearson_coef(data: npt.NDArray, target: npt.NDArray):
     :return: Mean Pearson correlation coefficient
     :rtype: float
     """
-    p_coefs = pearsonr(data, target, axis=0).statistic
+    p_coefs = []
+    for d, t in zip(
+        np.nditer(data, order="F", flags=["external_loop"]),
+        np.nditer(target, order="F", flags=["external_loop"]),
+    ):
+        p_coefs.append(pearsonr(d, t).statistic)
     return np.mean(p_coefs)
 
 
