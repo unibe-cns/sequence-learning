@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
+import pickle as pkl
 from collections import defaultdict
 
-import matplotlib.pyplot as plt
 import numpy as np
-from plotting import plot_activity, plot_weights
 from tqdm import tqdm
 
 from elise.config import FullConfig
@@ -84,23 +83,25 @@ dataloader = Dataloader(fuer_elise, pre_transforms=[to_biounits])
 full_pattern_u = dataloader.get_full_pattern(dt)
 full_pattern_r = eq_phi_(full_pattern_u)
 
-training_duration = 10 * pat_duration
-validation_duration = 1.5 * pat_duration
-replay_duration = 6 * pat_duration
-num_epochs = 10
+training_duration = 5 * pat_duration
+validation_duration = 2 * pat_duration
+replay_duration = 4 * pat_duration
+num_epochs = 50
 
 pre_transform = []
 
 # Training
 simulation_output = []
 target = []
-r_bar = []
 weights = defaultdict(list)
 
 all_mses = defaultdict(list)
 all_corr_coefs = defaultdict(list)
 
 weight_types = ["vis_vis", "vis_lat", "lat_lat", "lat_vis"]
+
+output_rates = []
+target_rates = []
 
 for epoch in tqdm(range(num_epochs)):
     # TRAINING ITERATION
@@ -115,6 +116,7 @@ for epoch in tqdm(range(num_epochs)):
 
     # VALIDATION ITERATION
     val_output = []
+    tgt_output = []
     for _, u_tgt in dataloader.iter(0, validation_duration, dt):
         network(u_inp=None)
 
@@ -122,11 +124,17 @@ for epoch in tqdm(range(num_epochs)):
 
         simulation_output.append(output)
         val_output.append(output)
-
-        target.append(u_tgt)
+        tgt_output.append(u_tgt)
 
     val_output_u = np.array(val_output)
+    tgt_output_u = np.array(tgt_output)
+
+    # Convert to rate
     val_output_r = eq_phi_(val_output_u)
+    val_target_r = eq_phi_(tgt_output_u)
+
+    output_rates.append(val_output_r.T)
+    target_rates.append(val_target_r.T)
 
     all_mses["u"].append(calc_val_mse(val_output_u, full_pattern_u))
     all_mses["r"].append(calc_val_mse(val_output_r, full_pattern_r))
@@ -147,19 +155,19 @@ for _, u_tgt in dataloader.iter(0, replay_duration, dt):
 simulation_output = np.array(simulation_output)
 target = np.array(target)
 
-plot_activity(simulation_output, target, full_pattern_u, replay_duration, dt)
-plot_weights(network)
+results = {
+    "simulation_output": simulation_output,
+    "target": target,
+    "full_pattern_u": full_pattern_u,
+    "replay_duration": replay_duration,
+    "dt": dt,
+    "network": network,
+    "all_mses": all_mses,
+    "all_corr_coefs": all_corr_coefs,
+    "output_rates": output_rates,
+    "target_rates": target_rates,
+    "num_epochs": num_epochs,
+}
 
-fig, ax = plt.subplots(4, 1, sharex=True)
-ax[0].set_title("validation.")
-ax[0].plot(all_mses["u"])
-ax[1].plot(all_mses["r"])
-ax[0].set_ylabel("MSE on u")
-ax[1].set_ylabel("MSE on r")
-ax[2].plot(all_corr_coefs["u"])
-ax[3].plot(all_corr_coefs["r"])
-ax[2].set_ylabel("pearson on u")
-ax[3].set_ylabel("pearson on r")
-ax[3].set_xlabel("epochs")
-
-plt.show()
+with open("results.pkl", "wb") as f:
+    pkl.dump(results, f)
