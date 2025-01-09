@@ -8,7 +8,9 @@ black[jupyter]  # the same for jupyter notebooks
 isort  # sorts the imports, pre-commmit hook
 pre-commit  # well, the pre-commit hook thing
 sphinx  # automatic documentation tool
-pytest  # verx powerful testing framework in python
+pytest  # very powerful testing framework in python
+pytest-sugar  # make pytest appearance look nicer
+pytest-cov  # report the test coverage
 nbstripout  # strips the outputs from jupiter notebooks. Very handy when using
 # jupyter with git. pre-commit hook
 mypy  # type checking in python
@@ -20,3 +22,4 @@ matplotlib
 jupyterlab
 tqdm
 scipy
+numba
