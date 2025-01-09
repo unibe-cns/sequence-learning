@@ -20,5 +20,6 @@ setuptools >= 67.0
 numpy
 matplotlib
 jupyterlab
+tqdm
 scipy
 numba
