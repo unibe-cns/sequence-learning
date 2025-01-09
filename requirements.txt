@@ -22,3 +22,4 @@ matplotlib
 jupyterlab
 scipy
 numba
+tqdm
