@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import ast
 import pickle as pkl
 from collections import defaultdict
 
@@ -73,8 +74,17 @@ def calc_val_pearson(data, target):
     return np.max(window_slider(data, target, pearson_coef))
 
 
+def get_pattern_from_txt(filename):
+    with open(filename, "r") as file:
+        content = file.read().strip()
+
+    result = ast.literal_eval(f"[{content}]")
+
+    return result
+
+
 # Pattern & Dataloader
-pat = np.loadtxt("fuer_elise_short.txt", delimiter=",", skiprows=1).astype(int)
+pat = get_pattern_from_txt("patterns/small_complex.txt")
 pat_duration = 250.0
 pattern_width = network_params.num_vis
 fuer_elise = MultiHotPattern(pat, pat_duration, pattern_width)
@@ -83,7 +93,7 @@ dataloader = Dataloader(fuer_elise, pre_transforms=[to_biounits])
 full_pattern_u = dataloader.get_full_pattern(dt)
 full_pattern_r = eq_phi_(full_pattern_u)
 
-training_duration = 5 * pat_duration
+training_duration = 25 * pat_duration
 validation_duration = 2 * pat_duration
 replay_duration = 4 * pat_duration
 num_epochs = 50
@@ -142,14 +152,30 @@ for epoch in tqdm(range(num_epochs)):
     all_corr_coefs["u"].append(calc_val_pearson(val_output_u, full_pattern_u))
     all_corr_coefs["r"].append(calc_val_pearson(val_output_r, full_pattern_r))
 
+
 # FINAL REPLAY
+pat = get_pattern_from_txt("patterns/disruption_excitation.txt")
+pattern_width = network_params.num_vis
+disruption_duration = 250.0
+pat = MultiHotPattern(pat, pat_duration, pattern_width)
+disruption_excitation = Dataloader(pat, pre_transforms=[to_biounits])
+
+for _, u_tgt in disruption_excitation.iter(0, disruption_duration, dt):
+    network.u[: network.num_vis] = u_tgt
+
+    network(u_inp=None)
+    output = network.get_output()
+
+    simulation_output.append(output)
+    target.append(u_tgt)
+
+
 for _, u_tgt in dataloader.iter(0, replay_duration, dt):
     network(u_inp=None)
 
     output = network.get_output()
 
     simulation_output.append(output)
-
     target.append(u_tgt)
 
 simulation_output = np.array(simulation_output)
@@ -160,6 +186,8 @@ results = {
     "target": target,
     "full_pattern_u": full_pattern_u,
     "replay_duration": replay_duration,
+    "validation_duration": validation_duration,
+    "disruption_duration": disruption_duration,
     "dt": dt,
     "network": network,
     "all_mses": all_mses,

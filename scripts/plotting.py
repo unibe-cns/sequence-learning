@@ -60,12 +60,26 @@ def plot_weights_over_time(weights):
     return fig
 
 
-def plot_activity(simulation_output, target, full_pattern, replay_duration, dt):
+def plot_activity(
+    simulation_output,
+    target,
+    full_pattern,
+    replay_duration,
+    validation_duration,
+    disruption_duration,
+    dt,
+):
     # Create a figure with two subplots, sharing the x-axis
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 4), sharex=True)
 
     # Plot simulation output
-    last = (4 * len(full_pattern)) + int(replay_duration / dt)
+
+    last = (
+        (2 * len(full_pattern))
+        + int(validation_duration / dt)
+        + int(replay_duration / dt)
+        + int(disruption_duration / dt)
+    )
 
     colormap = plt.get_cmap("Blues")
     im1 = ax1.imshow(
@@ -160,6 +174,8 @@ if __name__ == "__main__":
     num_epochs = results["num_epochs"]
     full_pattern_u = results["full_pattern_u"]
     replay_duration = results["replay_duration"]
+    validation_duration = results["validation_duration"]
+    disruption_duration = results["disruption_duration"]
     dt = results["dt"]
     network = results["network"]
     simulation_output = results["simulation_output"]
@@ -168,7 +184,15 @@ if __name__ == "__main__":
     dpi = 300
     fig = plot_arnos_activity(output_rates, target_rates, num_epochs, nr_plots=4)
     plt.savefig("figs/arnos_activity.png", dpi=dpi)
-    fig = plot_activity(simulation_output, target, full_pattern_u, replay_duration, dt)
+    fig = plot_activity(
+        simulation_output,
+        target,
+        full_pattern_u,
+        replay_duration,
+        validation_duration,
+        disruption_duration,
+        dt,
+    )
     plt.savefig("figs/activity.png", dpi=dpi)
     fig = plot_weights(network)
     plt.savefig("figs/weights.png", dpi=dpi)
