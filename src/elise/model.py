@@ -70,7 +70,7 @@ class Network:
             * `self.num_vis`: Number of visible neurons
 
         """
-        return np.copy(self.u[: self.num_vis])
+        return np.copy(self.u[self.visible])
 
     def _compute_buffer_depth(self, dt):
         max_buffer_ms = max(max(self.dendritic_delays), max(self.interneuron_delays))
@@ -124,19 +124,13 @@ class Network:
         return dudt, dvdt, dwdt, dr_bar_dt
 
     def _update_weights(self, dwdt):
-        # Vis view
-        dwdt_vis = dwdt[: self.num_vis, : self.num_vis]
+        dwdt_full = self.optimizer_lat.get_update(self.dendritic_weights, dwdt)
+        dwdt_vis = self.optimizer_vis.get_update(
+            self.dendritic_weights[self.w_vis], dwdt[self.w_vis]
+        )
+        dwdt_full[self.w_vis] = dwdt_vis
 
-        # Update Vis
-        w_vis = self.dendritic_weights[: self.num_vis, : self.num_vis]
-        w_vis_update = self.optimizer_vis.get_update(w_vis, dwdt_vis) * self.dt
-        self.dendritic_weights[: self.num_vis, : self.num_vis] += w_vis_update
-
-        # Update Rest
-        dwdt_vis[:] = 0  # Set vis slice to 0
-        w_rest = self.dendritic_weights
-        w_rest_update = self.optimizer_lat.get_update(w_rest, dwdt) * self.dt
-        self.dendritic_weights += w_rest_update
+        self.dendritic_weights += dwdt_full * self.dt
 
     def _update_dyanmic_variables(self, dudt, dvdt, dr_bar_dt):
         self.u += dudt * self.dt
