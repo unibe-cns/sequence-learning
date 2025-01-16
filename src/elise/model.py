@@ -48,6 +48,10 @@ class Network:
         self.r_exc = np.ones(self.num_all) * self.r_rest
         self.r_inh = np.ones(self.num_all) * self.r_rest
 
+        self.visible = np.s_[: self.num_vis]
+        self.latent = np.s_[self.num_vis :]
+        self.w_vis = np.s_[: self.num_vis, : self.num_vis]
+
         self.dt = None
 
     def get_output(self):
