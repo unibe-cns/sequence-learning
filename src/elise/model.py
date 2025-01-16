@@ -54,23 +54,36 @@ class Network:
 
         self.dt = None
 
-    def get_output(self):
+    def get_attribute(self, attribute_name, view="all"):
         """
-        Retrieve the output of visible neurons.
+        Retrieve the specified attribute for the given neuron type.
 
-        :returns: Copy of activation values for visible neurons
+        :param attribute_name: Name attribute to retrieve (e.g., 'v', 'u', 'r', 'r_bar')
+        :param neuron_type: Type of neurons to retrieve ('all', 'visible', or 'latent')
+        :returns: Copy of the requested attribute values
         :rtype: numpy.ndarray
 
-        .. note::
-            Returns a copy of the first `num_vis` neurons' activation values to prevent
-            unintended modifications of the network's internal state.
-
-        .. seealso::
-            * `self.u`: Internal activation array
-            * `self.num_vis`: Number of visible neurons
-
+        :raises AttributeError: If the specified attribute doesn't exist
+        :raises ValueError: If an invalid neuron_type is provided
         """
-        return np.copy(self.u[self.visible])
+        if not hasattr(self, attribute_name):
+            raise AttributeError(f"Attribute '{attribute_name}' does not exist")
+
+        attribute = getattr(self, attribute_name)
+
+        if not isinstance(attribute, np.ndarray):
+            raise AttributeError(f"Attribute '{attribute_name}' is not an array")
+
+        if view == "all":
+            return np.copy(attribute)
+        elif view == "visible":
+            return np.copy(attribute[self.visible])
+        elif view == "latent":
+            return np.copy(attribute[self.latent])
+        else:
+            raise ValueError(
+                "Invalid neuron_type. Must be 'all', 'visible', or 'latent'"
+            )
 
     def _compute_buffer_depth(self, dt):
         max_buffer_ms = max(max(self.dendritic_delays), max(self.interneuron_delays))
