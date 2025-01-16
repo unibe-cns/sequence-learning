@@ -54,7 +54,7 @@ class Network:
 
         self.dt = None
 
-    def get_attribute(self, attribute_name, view="all"):
+    def get_val(self, attribute_name, view="all"):  #
         """
         Retrieve the specified attribute for the given neuron type.
 
