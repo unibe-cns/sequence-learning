@@ -48,25 +48,42 @@ class Network:
         self.r_exc = np.ones(self.num_all) * self.r_rest
         self.r_inh = np.ones(self.num_all) * self.r_rest
 
+        self.visible = np.s_[: self.num_vis]
+        self.latent = np.s_[self.num_vis :]
+        self.w_vis = np.s_[: self.num_vis, : self.num_vis]
+
         self.dt = None
 
-    def get_output(self):
+    def get_val(self, attribute_name, view="all"):  #
         """
-        Retrieve the output of visible neurons.
+        Retrieve the specified attribute for the given neuron type.
 
-        :returns: Copy of activation values for visible neurons
+        :param attribute_name: Name attribute to retrieve (e.g., 'v', 'u', 'r', 'r_bar')
+        :param neuron_type: Type of neurons to retrieve ('all', 'visible', or 'latent')
+        :returns: Copy of the requested attribute values
         :rtype: numpy.ndarray
 
-        .. note::
-            Returns a copy of the first `num_vis` neurons' activation values to prevent
-            unintended modifications of the network's internal state.
-
-        .. seealso::
-            * `self.u`: Internal activation array
-            * `self.num_vis`: Number of visible neurons
-
+        :raises AttributeError: If the specified attribute doesn't exist
+        :raises ValueError: If an invalid neuron_type is provided
         """
-        return np.copy(self.u[: self.num_vis])
+        if not hasattr(self, attribute_name):
+            raise AttributeError(f"Attribute '{attribute_name}' does not exist")
+
+        attribute = getattr(self, attribute_name)
+
+        if not isinstance(attribute, np.ndarray):
+            raise AttributeError(f"Attribute '{attribute_name}' is not an array")
+
+        if view == "all":
+            return np.copy(attribute)
+        elif view == "visible":
+            return np.copy(attribute[self.visible])
+        elif view == "latent":
+            return np.copy(attribute[self.latent])
+        else:
+            raise ValueError(
+                "Invalid neuron_type. Must be 'all', 'visible', or 'latent'"
+            )
 
     def _compute_buffer_depth(self, dt):
         max_buffer_ms = max(max(self.dendritic_delays), max(self.interneuron_delays))
@@ -120,19 +137,13 @@ class Network:
         return dudt, dvdt, dwdt, dr_bar_dt
 
     def _update_weights(self, dwdt):
-        # Vis view
-        dwdt_vis = dwdt[: self.num_vis, : self.num_vis]
+        dwdt_full = self.optimizer_lat.get_update(self.dendritic_weights, dwdt)
+        dwdt_vis = self.optimizer_vis.get_update(
+            self.dendritic_weights[self.w_vis], dwdt[self.w_vis]
+        )
+        dwdt_full[self.w_vis] = dwdt_vis
 
-        # Update Vis
-        w_vis = self.dendritic_weights[: self.num_vis, : self.num_vis]
-        w_vis_update = self.optimizer_vis.get_update(w_vis, dwdt_vis) * self.dt
-        self.dendritic_weights[: self.num_vis, : self.num_vis] += w_vis_update
-
-        # Update Rest
-        dwdt_vis[:] = 0  # Set vis slice to 0
-        w_rest = self.dendritic_weights
-        w_rest_update = self.optimizer_lat.get_update(w_rest, dwdt) * self.dt
-        self.dendritic_weights += w_rest_update
+        self.dendritic_weights += dwdt_full * self.dt
 
     def _update_dyanmic_variables(self, dudt, dvdt, dr_bar_dt):
         self.u += dudt * self.dt
