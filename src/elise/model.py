@@ -48,9 +48,12 @@ class Network:
         self.r_exc = np.ones(self.num_all) * self.r_rest
         self.r_inh = np.ones(self.num_all) * self.r_rest
 
-        self.visible = np.s_[: self.num_vis]
-        self.latent = np.s_[self.num_vis :]
-        self.w_vis = np.s_[: self.num_vis, : self.num_vis]
+        self.view_visible = np.s_[: self.num_vis]
+        self.view_latent = np.s_[self.num_vis :]
+        self.view_vis_lat = np.s_[: self.num_vis, self.num_vis :]
+        self.view_vis_vis = np.s_[: self.num_vis, : self.num_vis]
+        self.view_lat_vis = np.s_[self.num_vis :, : self.num_vis]
+        self.view_lat_lat = np.s_[self.num_vis :, self.num_vis :]
 
         self.dt = None
 
@@ -77,9 +80,17 @@ class Network:
         if view == "all":
             return np.copy(attribute)
         elif view == "visible":
-            return np.copy(attribute[self.visible])
+            return np.copy(attribute[self.view_visible])
         elif view == "latent":
-            return np.copy(attribute[self.latent])
+            return np.copy(attribute[self.view_latent])
+        elif view == "vis_lat":
+            np.copy(attribute[self.view_vis_lat])
+        elif view == "vis_vis":
+            np.copy(attribute[self.view_vis_vis])
+        elif view == "lat_vis":
+            np.copy(attribute[self.view_lat_vis])
+        elif view == "lat_lat":
+            np.copy(attribute[self.view_lat_lat])
         else:
             raise ValueError(
                 "Invalid neuron_type. Must be 'all', 'visible', or 'latent'"
@@ -139,9 +150,9 @@ class Network:
     def _update_weights(self, dwdt):
         dwdt_full = self.optimizer_lat.get_update(self.dendritic_weights, dwdt)
         dwdt_vis = self.optimizer_vis.get_update(
-            self.dendritic_weights[self.w_vis], dwdt[self.w_vis]
+            self.dendritic_weights[self.view_vis_vis], dwdt[self.view_vis_vis]
         )
-        dwdt_full[self.w_vis] = dwdt_vis
+        dwdt_full[self.view_vis_vis] = dwdt_vis
 
         self.dendritic_weights += dwdt_full * self.dt
 
