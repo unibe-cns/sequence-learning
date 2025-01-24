@@ -3,6 +3,7 @@
 from collections import defaultdict
 
 import dill
+import numpy as np
 
 from .model import Network
 
@@ -37,3 +38,13 @@ class Tracker:
     def load(cls, path):
         with open(path, "rb") as f:
             return dill.load(f)
+
+    def __getitem__(self, item):
+        return np.array(self.track_dict[item])
+
+    def __repr__(self):
+        return (
+            f"Tracker({list(self.track_dict.keys())}, "
+            f"length={self.track_counter}, "
+            f"track_step={self.track_step})"
+        )
