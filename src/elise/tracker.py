@@ -2,6 +2,8 @@
 
 from collections import defaultdict
 
+import dill
+
 from .model import Network
 
 
@@ -26,3 +28,12 @@ class Tracker:
                 print(f"Error during tracking: {str(e)}")
         else:
             pass
+
+    def save(self, path):
+        with open(path, "wb") as f:
+            dill.dump(self, f)
+
+    @classmethod
+    def load(cls, path):
+        with open(path, "rb") as f:
+            return dill.load(f)
