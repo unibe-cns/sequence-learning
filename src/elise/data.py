@@ -230,7 +230,100 @@ class MultiHotPattern(BasePattern):
         return res
 
 
-class Dataloader:
+class BaseContineousPattern(ABC):
+    """DOCSTRING."""
+
+    @abstractmethod
+    def __init__(self) -> None:
+        pass
+
+    @property
+    @abstractmethod
+    def duration(self) -> float:
+        pass
+
+    @abstractmethod
+    def __call__(self, t: float) -> npt.NDArray:
+        """DOCSTRING."""
+        pass
+
+
+class CirclePattern(BaseContineousPattern):
+    def __init__(self, radius: float, center_x: float, center_y: float, period: float):
+        self.radius = radius
+        self.center_x = center_x
+        self.center_y = center_y
+        self._period = period
+
+    @property
+    def duration(self):
+        return self._period
+
+    def __call__(self, t):
+        x = self.center_x + self.radius * np.cos(2 * np.pi * t / self._period)
+        y = self.center_y + self.radius * np.sin(2 * np.pi * t / self._period)
+
+        return np.array([x, y])
+
+
+class LorenzAttractor:
+    def __init__(
+        self,
+        sigma: float = 10,
+        rho: float = 28,
+        beta: float = 8 / 3,
+        x0: float = 0,
+        y0: float = 0,
+        z0: float = 0,
+        t0: float = 0.0,
+        duration: float = 10.0,
+    ):
+        self.sigma = sigma
+        self.rho = rho
+        self.beta = beta
+        self.x = x0
+        self.y = y0
+        self.z = z0
+        self.last_t = t0
+        self._duration = duration
+
+    @property
+    def duration(self):
+        return self._duration
+
+    def __call__(self, t: float):
+        dx = self.sigma * (self.y - self.x)
+        dy = self.x * (self.rho - self.z) - self.y
+        dz = self.x * self.y - self.beta * self.z
+
+        dt = t - self.last_t
+        self.x += dx * dt
+        self.y += dy * dt
+        self.z += dz * dt
+        self.last_t = t
+
+        return np.array([self.x, self.y, self.z])
+
+
+class BaseDataloader(ABC):
+    @abstractmethod
+    def __init__(self) -> None:
+        pass
+
+    @abstractmethod
+    def __call__(self, t: float, offset: float = 0.0) -> npt.NDArray:
+        pass
+
+    @abstractmethod
+    def iter(self, t_start: float, t_stop: float, dt: float) -> npt.NDArray:
+        pass
+
+    @abstractmethod
+    def get_full_pattern(self, dt) -> npt.NDArray:
+        pass
+
+
+class DiscreteDataloader(BaseDataloader):
     """
     Dataloader for pattern data.
 
@@ -346,3 +439,52 @@ class Dataloader:
             full_pattern.append(pattern)
 
         return np.array(full_pattern)
+
+
+class ContineousDataloader(BaseDataloader):
+    def __init__(self, pattern, pre_transforms=[], online_transforms=[]):
+        self.pattern = pattern
+        self.duration = self.pattern.duration
+
+        self.pre_transforms = pre_transforms
+        self.online_transforms = online_transforms
+
+    @staticmethod
+    def _apply_transforms(transforms, pattern):
+        for transform in transforms:
+            pattern = transform(pattern)
+        return pattern
+
+    def __call__(self, t: float, offset: float = 0.0):
+        pat = self.pattern(t + offset)
+        pat = self._apply_transforms(self.pre_transforms, pat)
+        pat = self._apply_transforms(self.online_transforms, pat)
+        return pat
+
+    def iter(self, t_start, t_stop, dt):
+        t = t_start
+        while t < t_stop:
+            yield t, self.__call__(t)
+            t += dt
+
+    def get_full_pattern(self, dt):
+        full_pattern = []
+        for _, pattern in self.iter(0, self.duration, dt):
+            full_pattern.append(pattern)
+
+        return np.array(full_pattern)
+
+
+def Dataloader(pattern, pre_transforms=[], online_transforms=[]):
+    if isinstance(pattern, BasePattern):
+        return DiscreteDataloader(
+            pattern, pre_transforms=pre_transforms, online_transforms=online_transforms
+        )
+    if isinstance(pattern, BaseContineousPattern):
+        return ContineousDataloader(
+            pattern, pre_transforms=pre_transforms, online_transforms=online_transforms
+        )
+    else:
+        raise TypeError(
+            f"pattern is {type(pattern)}, but should inherit from BasePattern or BaseContineousPatter."  # noqa
+        )
