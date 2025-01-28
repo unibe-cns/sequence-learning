@@ -4,7 +4,7 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -230,7 +230,7 @@ class MultiHotPattern(BasePattern):
         return res
 
 
-class BaseContineousPattern(ABC):
+class BaseContinuousPattern(ABC):
     """DOCSTRING."""
 
     @abstractmethod
@@ -248,7 +248,7 @@ class BaseContineousPattern(ABC):
         pass
 
 
-class CirclePattern(BaseContineousPattern):
+class CirclePattern(BaseContinuousPattern):
     def __init__(self, radius: float, center_x: float, center_y: float, period: float):
         self.radius = radius
         self.center_x = center_x
@@ -441,8 +441,27 @@ class DiscreteDataloader(BaseDataloader):
         return np.array(full_pattern)
 
 
-class ContineousDataloader(BaseDataloader):
-    def __init__(self, pattern, pre_transforms=[], online_transforms=[]):
+class ContinuousDataloader(BaseDataloader):
+    """
+    A continuous data loader that applies transformations to patterns.
+
+    This class extends BaseDataloader to provide functionality for loading
+    and transforming continuous data patterns.
+
+    :param pattern: The pattern to be loaded and transformed.
+    :type pattern: Any
+    :param pre_transforms: List of transformations to apply before loading.
+    :type pre_transforms: List[Callable]
+    :param online_transforms: List of transformations to apply during loading.
+    :type online_transforms: List[Callable]
+    """
+
+    def __init__(
+        self,
+        pattern: BaseContinuousPattern,
+        pre_transforms: List[Callable] = [],
+        online_transforms: List[Callable] = [],
+    ):
         self.pattern = pattern
         self.duration = self.pattern.duration
 
@@ -450,24 +469,56 @@ class ContineousDataloader(BaseDataloader):
         self.online_transforms = online_transforms
 
     @staticmethod
-    def _apply_transforms(transforms, pattern):
+    def _apply_transforms(transforms: Callable, pattern: npt.NDArray) -> npt.NDArray:
         for transform in transforms:
             pattern = transform(pattern)
         return pattern
 
-    def __call__(self, t: float, offset: float = 0.0):
+    def __call__(self, t: float, offset: float = 0.0) -> npt.NDArray:
+        """
+        Call the dataloader to get a transformed pattern at a specific time.
+
+        :param t: The time at which to get the pattern.
+        :type t: float
+        :param offset: Time offset to apply.
+        :type offset: float
+        :return: The transformed pattern at the specified time.
+        :rtype: Any
+        """
         pat = self.pattern(t + offset)
         pat = self._apply_transforms(self.pre_transforms, pat)
         pat = self._apply_transforms(self.online_transforms, pat)
         return pat
 
-    def iter(self, t_start, t_stop, dt):
+    def iter(
+        self, t_start: float, t_stop: float, dt: float
+    ) -> Tuple[float, npt.NDArray]:
+        """
+        Iterate over the pattern within a time range.
+
+        :param t_start: Start time of the iteration.
+        :type t_start: float
+        :param t_stop: End time of the iteration.
+        :type t_stop: float
+        :param dt: Time step for the iteration.
+        :type dt: float
+        :yield: A tuple of (time, pattern) for each time step.
+        :rtype: Tuple[float, Any]
+        """
         t = t_start
         while t < t_stop:
             yield t, self.__call__(t)
             t += dt
 
-    def get_full_pattern(self, dt):
+    def get_full_pattern(self, dt: float) -> npt.NDArray:
+        """
+        Get the full pattern as a numpy array.
+
+        :param dt: Time step for sampling the pattern.
+        :type dt: float
+        :return: The full pattern as a numpy array.
+        :rtype: np.ndarray
+        """
         full_pattern = []
         for _, pattern in self.iter(0, self.duration, dt):
             full_pattern.append(pattern)
@@ -475,16 +526,46 @@ class ContineousDataloader(BaseDataloader):
         return np.array(full_pattern)
 
 
-def Dataloader(pattern, pre_transforms=[], online_transforms=[]):
+def Dataloader(
+    pattern: Union[BasePattern, BaseContinuousPattern],
+    pre_transforms: List[Callable] = [],
+    online_transforms: List[Callable] = [],
+) -> Union[DiscreteDataloader, ContinuousDataloader]:
+    """
+    Factory function to create an appropriate Dataloader based on the pattern type.
+
+    This function determines whether to create a DiscreteDataloader or a
+    ContinuousDataloader based on the type of the input pattern.
+    It also applies the specified pre-transforms and online-transforms to the
+    created dataloader.
+
+    :param pattern: The pattern object to be loaded.
+    :type pattern: Union[BasePattern, BaseContinuousPattern]
+    :param pre_transforms: List of transformations to apply before loading the pattern.
+    :type pre_transforms: List[Callable]
+    :param online_transforms: List of transformations to apply during pattern loading.
+    :type online_transforms: List[Callable]
+    :return: An instance of either DiscreteDataloader or ContinuousDataloader.
+    :rtype: Union[DiscreteDataloader, ContinuousDataloader]
+    :raises TypeError: If the pattern is neither a BasePattern nor a
+    BaseContinuousPattern.
+
+    :Example:
+
+    >>> discrete_pattern = BasePattern()
+    >>> discrete_loader = Dataloader(discrete_pattern)
+    >>> continuous_pattern = BaseContinuousPattern()
+    >>> continuous_loader = Dataloader(continuous_pattern)
+    """
     if isinstance(pattern, BasePattern):
         return DiscreteDataloader(
             pattern, pre_transforms=pre_transforms, online_transforms=online_transforms
         )
-    if isinstance(pattern, BaseContineousPattern):
-        return ContineousDataloader(
+    if isinstance(pattern, BaseContinuousPattern):
+        return ContinuousDataloader(
             pattern, pre_transforms=pre_transforms, online_transforms=online_transforms
         )
     else:
         raise TypeError(
-            f"pattern is {type(pattern)}, but should inherit from BasePattern or BaseContineousPatter."  # noqa
+            f"pattern is {type(pattern)}, but should inherit from BasePattern or BaseContinuousPatter."  # noqa
         )

@@ -6,7 +6,7 @@ from numpy.testing import assert_allclose
 
 from elise.data import (
     CirclePattern,
-    ContineousDataloader,
+    ContinuousDataloader,
     Dataloader,
     MultiHotPattern,
     OneHotPattern,
@@ -303,7 +303,7 @@ class TestDataloader:
 
 
 #############################
-# Test ContineousDataloader #
+# Test ContinuousDataloader #
 #############################
 
 
@@ -322,7 +322,7 @@ def contineous_dataloader_factory(circle_pattern):
 class TestContiDataloader:
     def test_bla(self, contineous_dataloader_factory):
         dl = contineous_dataloader_factory()
-        assert isinstance(dl, ContineousDataloader)
+        assert isinstance(dl, ContinuousDataloader)
         assert isinstance(dl(0), np.ndarray)
 
     @pytest.mark.parametrize("t", [0.0, 0.1, 0.4])
