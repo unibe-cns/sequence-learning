@@ -1,5 +1,6 @@
 import copy
 import pickle
+import warnings
 from collections import defaultdict
 from typing import Any, List, Tuple, Union
 
@@ -59,8 +60,7 @@ class Tracker:
         try:
             return self.network.get_val(name, view)
         except Exception as e:
-            print(f"Error retrieving {name} ({view}): {str(e)}")
-            return None
+            warnings.warn(f"Error retrieving {name} ({view}): {str(e)}", RuntimeWarning)
 
     def track(self, time: Union[int, float]) -> None:
         """
