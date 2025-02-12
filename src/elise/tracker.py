@@ -1,3 +1,4 @@
+import copy
 import pickle
 from collections import defaultdict
 from typing import Any, List, Tuple, Union
@@ -69,6 +70,7 @@ class Tracker:
         :type time: Union[int, float]
         """
         self.track_dict["time"].append(time)
+        self.track_dict["step"].append(copy.copy(self.track_counter))
         self.track_counter += 1
         if self.track_counter % self.track_step == 0:
             for name, view in self.variables:
