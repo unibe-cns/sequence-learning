@@ -1,7 +1,7 @@
+import pickle
 from collections import defaultdict
 from typing import Any, List, Tuple, Union
 
-import dill
 import numpy as np
 
 from .model import Network
@@ -96,7 +96,7 @@ class Tracker:
         :type path: str
         """
         with open(path, "wb") as f:
-            dill.dump(self, f)
+            pickle.dump(self, f)
 
     @classmethod
     def load(cls, path: str) -> "Tracker":
@@ -109,7 +109,7 @@ class Tracker:
         :rtype: Tracker
         """
         with open(path, "rb") as f:
-            return dill.load(f)
+            return pickle.load(f)
 
     def __getitem__(self, item: str) -> np.ndarray:
         """
