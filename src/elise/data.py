@@ -248,6 +248,73 @@ class BaseContinuousPattern(ABC):
         pass
 
 
+class RotatedFigure8Pattern(BaseContinuousPattern):
+    def __init__(
+        self,
+        width: float,
+        height: float,
+        center_x: float,
+        center_y: float,
+        period: float,
+        rotation_angle: float,
+    ):
+        self.width = width
+        self.height = height
+        self.center_x = center_x
+        self.center_y = center_y
+        self._period = period
+        self.rotation_angle = np.radians(rotation_angle)  # Convert to radians
+
+    @property
+    def duration(self):
+        return self._period
+
+    def __call__(self, t):
+        theta = 2 * np.pi * t / self._period
+        x = self.width * np.sin(theta) / (1 + np.cos(theta) ** 2)
+        y = self.height * np.sin(theta) * np.cos(theta) / (1 + np.cos(theta) ** 2)
+
+        # Apply rotation
+        x_rotated = x * np.cos(self.rotation_angle) - y * np.sin(self.rotation_angle)
+        y_rotated = x * np.sin(self.rotation_angle) + y * np.cos(self.rotation_angle)
+
+        # Translate to center
+        x_final = self.center_x + x_rotated
+        y_final = self.center_y + y_rotated
+
+        return np.array([x_final, y_final])
+
+
+class Figure8Pattern(BaseContinuousPattern):
+    def __init__(
+        self,
+        width: float,
+        height: float,
+        center_x: float,
+        center_y: float,
+        period: float,
+    ):
+        self.width = width
+        self.height = height
+        self.center_x = center_x
+        self.center_y = center_y
+        self._period = period
+
+    @property
+    def duration(self):
+        return self._period
+
+    def __call__(self, t):
+        # Parametric equations for a figure-8
+        theta = 2 * np.pi * t / self._period
+        x = self.center_x + self.width * np.sin(theta) / (1 + np.cos(theta) ** 2)
+        y = self.center_y + self.height * np.sin(theta) * np.cos(theta) / (
+            1 + np.cos(theta) ** 2
+        )
+
+        return np.array([x, y])
+
+
 class CirclePattern(BaseContinuousPattern):
     def __init__(self, radius: float, center_x: float, center_y: float, period: float):
         self.radius = radius
