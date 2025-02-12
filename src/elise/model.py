@@ -55,6 +55,16 @@ class Network:
         self.view_lat_vis = np.s_[self.num_vis :, : self.num_vis]
         self.view_lat_lat = np.s_[self.num_vis :, self.num_vis :]
 
+        self.views = {
+            "all": np.s_[:],
+            "visible": self.view_visible,
+            "latent": self.view_latent,
+            "vis_lat": self.view_vis_lat,
+            "vis_vis": self.view_vis_vis,
+            "lat_vis": self.view_lat_vis,
+            "lat_lat": self.view_lat_lat,
+        }
+
         self.dt = None
 
     def get_val(self, attribute_name, view="all"):  #
@@ -77,24 +87,13 @@ class Network:
         if not isinstance(attribute, np.ndarray):
             raise AttributeError(f"Attribute '{attribute_name}' is not an array")
 
-        if view == "all":
-            return np.copy(attribute)
-        elif view == "visible":
-            return np.copy(attribute[self.view_visible])
-        elif view == "latent":
-            return np.copy(attribute[self.view_latent])
-        elif view == "vis_lat":
-            np.copy(attribute[self.view_vis_lat])
-        elif view == "vis_vis":
-            np.copy(attribute[self.view_vis_vis])
-        elif view == "lat_vis":
-            np.copy(attribute[self.view_lat_vis])
-        elif view == "lat_lat":
-            np.copy(attribute[self.view_lat_lat])
-        else:
+        if view not in self.views:
             raise ValueError(
-                "Invalid neuron_type. Must be 'all', 'visible', or 'latent'"
+                "Invalid view. Must be 'all', 'visible', 'latent', \
+                'vis_lat', 'vis_vis', 'lat_vis', or 'lat_lat'"
             )
+
+        return np.copy(attribute[self.views[view]])
 
     def _compute_buffer_depth(self, dt):
         max_buffer_ms = max(max(self.dendritic_delays), max(self.interneuron_delays))
