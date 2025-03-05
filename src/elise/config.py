@@ -35,6 +35,9 @@ class SimulationConfig:
     input: str = "test"
     dt: float = 0.01
     pattern_dt: float = 0.25
+    pattern_duration: float = 100.0
+    replay_epochs: int = 10
+    training_epochs: int = 10
     training_cycles: int = 1000
     validation_cycles: int = 100
     replay_cycles: int = 100
