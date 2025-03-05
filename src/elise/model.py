@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import pickle
 from typing import Tuple
 
 import numba
@@ -171,6 +172,29 @@ class Network:
         self._update_dyanmic_variables(dudt, dvdt, dr_bar_dt)
         self._update_weights(dwdt)
         self._update_rates_and_buffer()
+
+    def save(self, path: str) -> None:
+        """
+        Save the tracker object to a file.
+
+        :param path: File path to save the tracker.
+        :type path: str
+        """
+        with open(path, "wb") as f:
+            pickle.dump(self, f)
+
+    @classmethod
+    def load(cls, path: str):
+        """
+        Load a tracker object from a file.
+
+        :param path: File path to load the tracker from.
+        :type path: str
+        :return: The loaded tracker object.
+        :rtype: Tracker
+        """
+        with open(path, "rb") as f:
+            return pickle.load(f)
 
 
 #####################################
