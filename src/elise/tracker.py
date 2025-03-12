@@ -57,10 +57,12 @@ class Tracker:
         :return: The value of the variable or None if an error occurs.
         :rtype: Any
         """
+
         try:
             return self.network.get_val(name, view)
-        except Exception as e:
-            warnings.warn(f"Error retrieving {name} ({view}): {str(e)}", RuntimeWarning)
+        except (AttributeError, TypeError) as e:
+            warnings.warn(f"Error retrieving {name} ({view}): {e}")
+            return None
 
     def track(self, time: Union[int, float]) -> None:
         """
