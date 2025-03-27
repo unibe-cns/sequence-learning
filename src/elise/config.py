@@ -1,7 +1,7 @@
 #!
 # /usr/bin/env python3
 import tomllib as toml
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from typing import Any, Dict, Tuple
 
 
@@ -62,6 +62,15 @@ class NeuronConfig:
     lam: float = 0.6
 
 
+@dataclass(slots=True)
+class TrackingConfig:
+    sim_step: int = 2
+    epoch_step: int = 1
+    vars_train: list = field(default_factory=list)
+    vars_epoch: list = field(default_factory=list)
+    vars_replay: list = field(default_factory=list)
+
+
 class Config:
     """
     A class for loading and accessing configuration data from a TOML file.
@@ -107,10 +116,13 @@ class FullConfig:
         self.neuron_params = self._create_config(
             NeuronConfig, config.get_section("neuron_params")
         )
+        self.tracking_params = self._create_config(
+            TrackingConfig, config.get_section("tracking_params")
+        )
 
     def _create_config(self, config_class: Config, config_dict: Dict[str, Any]):
         kwargs = {}
-        for field in fields(config_class):
-            if field.name in config_dict:
-                kwargs[field.name] = config_dict[field.name]
+        for f in fields(config_class):
+            if f.name in config_dict:
+                kwargs[f.name] = config_dict[field.name]
         return config_class(**kwargs)
