@@ -12,3 +12,10 @@
 6. install this very pip-package: `python -m pip install -e .`
 7. install the pre-commit hooks: `pre-commit install`
 8. happy coding! 
+
+
+## How to build the documentation:
+
+1. go to `docs/`
+2. run `make html`. This will create the html documentation in `docs/build/`
+3. At the moment, elise is not a public repo, so we can't publish this documentation. To view the documentation, just open `docs/build/html/index.html` in your favorite browser. Once the repo is open sourced, I will add a github page, which is automatically build!
