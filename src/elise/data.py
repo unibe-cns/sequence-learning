@@ -2,7 +2,7 @@
 
 # /usr/bin/env python3
 
-
+import copy
 from abc import ABC, abstractmethod
 from typing import Any, Callable, List, Optional, Tuple, Union
 
@@ -439,6 +439,85 @@ class DiscreteDataloader(BaseDataloader):
             full_pattern.append(pattern)
 
         return np.array(full_pattern)
+
+
+class ShuffleDataloader(BaseDataloader):
+    """
+    TODO.
+    """
+
+    def __init__(
+        self,
+        pattern: List[Pattern],
+        t_max: float,
+        t_start: float = 0.0,
+        seed: Optional[int] = None,
+        pre_transforms: List[Callable] = [],
+        online_transforms: List[Callable] = [],
+    ) -> None:
+        """
+        TODO.
+        """
+        self.pattern = copy.deepcopy(pattern)
+        self.num_pattern = len(pattern)
+        self.dts = [pat.dt for pat in self.pattern]
+        self.durations = [pat.duration for pat in self.pattern]
+        self.t_max = t_max
+        self.online_transforms = online_transforms
+
+        # apply pre-transforms directly once
+        for i in range(self.num_pattern):
+            for transform in pre_transforms:
+                self.pattern[i].transform(transform)
+        # self.pattern[0].transform(pre_transforms[0])
+        # print(self.pattern[0])
+
+        self._rng = np.random.default_rng(seed)
+        self.choice = lambda: self._rng.choice(self.num_pattern)
+
+        # store the indexes of the randomly drawn pattern
+        self._pat_ids = [self.choice()]
+        # store the starting times of the pattern
+        self._starting_times = [t_start]
+
+        # now, fill the arrays until t_max
+        # we do this, because the pattern can have arbitrary lengths:
+        while self._starting_times[-1] < t_max:
+            current_pat_idx = self.choice()
+            self._pat_ids.append(current_pat_idx)
+            self._starting_times.append(
+                self._starting_times[-1] + self.durations[self._pat_ids[-2]]
+            )
+
+    def _apply_online_transforms(self, pattern_1d):
+        for transform in self.online_transforms:
+            pattern_1d = transform(pattern_1d)
+        return pattern_1d
+
+    def __call__(self, t: float, offset: float = 1e-6):
+        """
+        TODO.
+        """
+
+        # find index of the pattern that is at t:
+        t += offset
+        idx_in_sequence = np.searchsorted(self._starting_times, t) - 1
+        pat_idx = self._pat_ids[idx_in_sequence]
+        time_in_pattern = t - self._starting_times[idx_in_sequence]
+
+        # get the pattern at the time t:
+        idx_in_pattern = int((time_in_pattern) / self.dts[idx_in_sequence])
+        pattern_t = self.pattern[pat_idx][idx_in_pattern]
+
+        pattern_t = self._apply_online_transforms(pattern_t)
+
+        return pattern_t
+
+    def iter(self, t_start, t_stop, dt):
+        raise NotImplementedError()
+
+    def get_full_pattern(self, dt):
+        raise NotImplementedError()
 
 
 class ContinuousDataloader(BaseDataloader):
