@@ -328,6 +328,11 @@ class TestDataloader:
             t_exp += 0.1
             idx += 1
 
+    def test_get_full_pattern(self, dataloader_factory, base_sequence):
+        dataloader = dataloader_factory()
+        res = dataloader.get_full_pattern(DT)
+        assert_allclose(res, base_sequence)
+
     def test_Dataloader_factory_error(self, dataloader_factory):
         with pytest.raises(TypeError):
             dataloader_factory(pattern="Not a Pattern.")
@@ -563,3 +568,44 @@ class TestShuffleDataloader:
 
         expected = transform_mult(transform_plus(expected_pattern[idx]))
         assert_allclose(dataloader(t), expected)
+
+    def test_iter(
+        self,
+        multisequence,
+        dataloader_factory,
+        shuffled_idx_factory,
+        multisequence_target_factory,
+        shuffledataloader_factory,
+    ):
+        dataloader = shuffledataloader_factory(
+            pattern=multisequence, length=SHUFFLE_SIZE, seed=SHUFFLE_SEED
+        )
+        expected_random_idx = shuffled_idx_factory(
+            num_pattern=len(multisequence), seed=SHUFFLE_SEED, length=SHUFFLE_SIZE
+        )
+        expected_pattern = multisequence_target_factory(
+            multisequence, expected_random_idx
+        )
+
+        res_iter = [x[1] for x in dataloader.iter(0.0, 1.0, DT)]
+
+        for res, exp in zip(res_iter, expected_pattern):
+            assert_allclose(res, exp)
+
+    def test_get_full_pattern(
+        self,
+        multisequence,
+        shuffledataloader_factory,
+        base_sequence,
+        base_sequence2,
+        base_sequence3,
+    ):
+        dataloader = shuffledataloader_factory(
+            pattern=multisequence, length=SHUFFLE_SIZE, seed=SHUFFLE_SEED
+        )
+
+        res = dataloader.get_full_pattern(dt=DT)
+        expected = np.concatenate(
+            (base_sequence, base_sequence2, base_sequence3), axis=0
+        )
+        assert_allclose(res, expected)

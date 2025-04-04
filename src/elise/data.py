@@ -435,7 +435,7 @@ class DiscreteDataloader(BaseDataloader):
         """
 
         full_pattern = []
-        for _, pattern in self.iter(0, self.duration, dt):
+        for _, pattern in self.iter(0, self.duration - 0.5 * dt, dt):
             full_pattern.append(pattern)
 
         return np.array(full_pattern)
@@ -443,7 +443,24 @@ class DiscreteDataloader(BaseDataloader):
 
 class ShuffleDataloader(BaseDataloader):
     """
-    TODO.
+    A dataloader that shuffles patterns and applies transformations.
+
+    This class extends `BaseDataloader` and is designed to load data patterns,
+    shuffle them, and apply transformations both preemptively and online.
+
+    :param pattern: List of patterns to shuffle and iterate over.
+    :type pattern: List[Pattern]
+    :param t_max: Maximum time for the sequence.
+    :type t_max: float
+    :param t_start: Starting time for the sequence, defaults to 0.0.
+    :type t_start: float, optional
+    :param seed: Seed for random number generation, defaults to None.
+    :type seed: Optional[int], optional
+    :param pre_transforms: List of preprocessing transformations to apply once.
+    :type pre_transforms: List[Callable]
+    :param online_transforms: List of online transformations to apply during iteration,
+    defaults to an empty list.
+    :type online_transforms: List[Callable]
     """
 
     def __init__(
@@ -456,7 +473,23 @@ class ShuffleDataloader(BaseDataloader):
         online_transforms: List[Callable] = [],
     ) -> None:
         """
-        TODO.
+        Initialize the ShuffleDataloader instance.
+
+        Creates a shuffled sequence of patterns and applies pre-transforms.
+
+        :param pattern: List of patterns to shuffle and iterate over.
+        :type pattern: List[Pattern]
+        :param t_max: Maximum time for the sequence.
+        :type t_max: float
+        :param t_start: Starting time for the sequence, defaults to 0.0.
+        :type t_start: float, optional
+        :param seed: Seed for random number generation, defaults to None.
+        :type seed: Optional[int], optional
+        :param pre_transforms: List of preprocessing transformations to apply once.
+        :type pre_transforms: List[Callable]
+        :param online_transforms: List of online transformations to apply during
+        iteration, defaults to an empty list.
+        :type online_transforms: List[Callable]
         """
         self.pattern = copy.deepcopy(pattern)
         self.num_pattern = len(pattern)
@@ -490,15 +523,40 @@ class ShuffleDataloader(BaseDataloader):
             )
 
     def _apply_online_transforms(self, pattern_1d):
+        """
+        Apply online transformations to a pattern.
+
+        This method applies all specified online transformations in sequence
+        to the given 1-dimensional pattern.
+
+        :param pattern_1d: The input pattern to transform.
+        :type pattern_1d: Any
+        :return: Transformed pattern.
+        :rtype: Any
+        """
         for transform in self.online_transforms:
             pattern_1d = transform(pattern_1d)
         return pattern_1d
 
     def __call__(self, t: float, offset: float = 1e-6):
         """
-        TODO.
-        """
+        Retrieve the pattern at a specific time `t`.
 
+        This method finds the appropriate pattern based on the given time `t`,
+        applies online transformations, and returns the transformed result.
+
+        :param t: Time at which to retrieve the pattern.
+        :type t: float
+        :param offset: Small offset added to `t` for numerical stability,
+        defaults to 1e-6.
+        :type offset: float, optional
+        :return: Transformed pattern at time `t`.
+        :rtype: Any
+
+        :raises ValueError: If `t` exceeds `t_max`.
+        """
+        if t > self.t_max:
+            raise ValueError("t must be small smaller than t_max.")
         # find index of the pattern that is at t:
         t += offset
         idx_in_sequence = np.searchsorted(self._starting_times, t) - 1
@@ -514,10 +572,58 @@ class ShuffleDataloader(BaseDataloader):
         return pattern_t
 
     def iter(self, t_start, t_stop, dt):
-        raise NotImplementedError()
+        """
+        Use dataloader as an iterator/iterable.
 
-    def get_full_pattern(self, dt):
-        raise NotImplementedError()
+        Generates tuples of time and corresponding patterns between `t_start`
+        and `t_stop` with a step size of `dt`.
+
+        :param t_start: Start time of iteration.
+        :type t_start: float
+        :param t_stop: Stop time of iteration.
+        :type t_stop: float
+        :param dt: Time step between iterations.
+        :type dt: float
+        :yield: Tuple containing time and corresponding pattern.
+        :rtype: Iterator[Tuple[float, np.ndarray]]
+
+        Example:
+            >>> for t, pattern in dataloader.iter(t_start=0.0, t_stop=10.0, dt=0.1):
+            ...     print(t, pattern)
+            ...
+            0.0 [pattern data]
+            0.1 [pattern data]
+            ...
+            9.9 [pattern data]
+        """
+        t = t_start
+        while t < t_stop:
+            yield t, self.__call__(t, offset=dt * 0.01)
+            t += dt
+
+    def get_full_pattern(self, dt, idx: Optional[List[int]] = None):
+        """
+        Retrieve the full concatenated pattern sequence.
+
+        Combines all selected patterns into a single array after applying online
+        transformations.
+
+        :param dt: Time step used for sampling patterns.
+        :type dt: float
+        :param idx: Indices of patterns to include in the concatenation. Defaults to
+        all patterns if None.
+        :type idx: Optional[List[int]]
+        :return: The concatenated array of transformed patterns.
+        :rtype: np.ndarray
+        """
+        full_pattern = []
+        if idx is None:
+            idx = list(range(self.num_pattern))
+        for i in idx:
+            dl = Dataloader(self.pattern[i], online_transforms=self.online_transforms)
+            full_pattern.append(dl.get_full_pattern(dt))
+
+        return np.concatenate(full_pattern, axis=0)
 
 
 class ContinuousDataloader(BaseDataloader):
