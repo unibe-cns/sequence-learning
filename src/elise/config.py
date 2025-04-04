@@ -107,7 +107,7 @@ class FullConfig:
 
     def _create_config(self, config_class: Config, config_dict: Dict[str, Any]):
         kwargs = {}
-        for field in fields(config_class):
-            if field.name in config_dict:
-                kwargs[field.name] = config_dict[field.name]
+        for f in fields(config_class):
+            if f.name in config_dict:
+                kwargs[f.name] = config_dict[f.name]
         return config_class(**kwargs)
