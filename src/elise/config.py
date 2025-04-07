@@ -124,5 +124,5 @@ class FullConfig:
         kwargs = {}
         for f in fields(config_class):
             if f.name in config_dict:
-                kwargs[f.name] = config_dict[field.name]
+                kwargs[f.name] = config_dict[f.name]
         return config_class(**kwargs)
