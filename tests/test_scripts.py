@@ -3,12 +3,15 @@
 """Run a whole script, for instance as a smoke test."""
 
 import subprocess
+from pathlib import Path
 
 import pytest
 
+path = Path(__file__).parent.resolve()
+
 
 @pytest.mark.parametrize(
-    "script_path", ["experiment_smoketest.py"]
+    "script_path", [path / "experiment_smoketest.py"]
 )  # Replace with your script path
 def test_script_execution(script_path):
     try:

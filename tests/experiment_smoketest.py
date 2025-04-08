@@ -7,6 +7,8 @@ Works as a sanity check for the API etc. Does not test whether the network
 actually learns, does the numerics correctly.
 """
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
@@ -20,8 +22,12 @@ from elise.stats import mse, window_slider
 from elise.tracker import Tracker
 from elise.weights import DendriticWeights, SomaticWeights
 
+path = Path(__file__).parent.resolve()
+artifacts_path = path / "artifacts"
+artifacts_path.mkdir(exist_ok=True)
+
 # Config
-full_config = FullConfig("smoketest_config.toml")
+full_config = FullConfig(path / "smoketest_config.toml")
 neuron_params = full_config.neuron_params
 network_params = full_config.network_params
 simulation_params = full_config.simulation_params
@@ -50,7 +56,7 @@ def to_biounits(x):
     return neuron_params.E_l + x * 20.0
 
 
-elise = np.loadtxt("fuer_elise_short.txt", skiprows=1, delimiter=",").astype(int)
+elise = np.loadtxt(path / "fuer_elise_short.txt", skiprows=1, delimiter=",").astype(int)
 
 pattern = MultiHotPattern(
     pattern=elise,
@@ -98,7 +104,7 @@ for epoch in tqdm(range(simulation_params.training_epochs)):
     print(f"Epoch {epoch} -  MSE u: {mse_loss}")  # noqa
 
 
-network.save("network.pkl")
+network.save(artifacts_path / "network.pkl")
 
 # replay
 for t in np.arange(0, replay_duration, simulation_params.dt):
@@ -113,7 +119,7 @@ ax.plot(replay_losses)
 ax.set_xlabel("time")
 ax.set_ylabel("mse")
 
-fig.savefig("replay_losses.png")
+fig.savefig(artifacts_path / "replay_losses.png")
 
-train_tracker.save("train_tracker.pkl")
-replay_tracker.save("replay_tracker.pkl")
+train_tracker.save(artifacts_path / "train_tracker.pkl")
+replay_tracker.save(artifacts_path / "replay_tracker.pkl")
