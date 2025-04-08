@@ -7,6 +7,13 @@ Works as a sanity check for the API etc. Does not test whether the network
 actually learns, does the numerics correctly.
 """
 
+import sys
+import os
+
+print("sys.prefix", sys.prefix)
+print("sys.base_prefix", sys.base_prefix)
+print("venv_path", os.environ.get("VIRTUAL_ENV", None))
+
 from pathlib import Path
 
 import matplotlib.pyplot as plt
