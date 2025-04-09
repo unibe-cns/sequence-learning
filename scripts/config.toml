@@ -24,6 +24,9 @@ d_int = 25
 [simulation_params]
 input = 'test'
 dt = 0.1
+training_epochs = 200
+replay_epochs = 100
+pattern_duration = 100.0
 pattern_dt = 0.25
 training_cycles = 1000
 validation_cycles = 1
@@ -31,8 +34,6 @@ replay_cycles = 100
 validation_interval = 20
 eta_out = 10e-4
 eta_lat = 10e-2
-# eta_out = 10
-# eta_lat = 10
 
 [neuron_params]
 C_v = 1.0
@@ -48,5 +49,22 @@ a   = 0.3
 b   = -58.0
 lam = 0.7
 
-[data_params]
-pattern_length = 22
+[tracking_params]
+sim_step = 2
+epoch_step = 2
+
+vars_train = [
+  ["v", "all" ],
+  ["u", "visible" ],
+  ["r", "latent" ]
+  ]
+
+vars_epoch = [
+  ["dendritic_weights", "all" ],
+  ]
+
+vars_replay = [
+  ["v", "all" ],
+  ["u", "visible" ],
+  ["r", "latent" ]
+  ]
