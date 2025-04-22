@@ -69,6 +69,7 @@ class TrackingConfig:
     vars_train: list = field(default_factory=list)
     vars_epoch: list = field(default_factory=list)
     vars_replay: list = field(default_factory=list)
+    vars_val: list = field(default_factory=list)
 
 
 class Config:
